@@ -187,6 +187,15 @@ def test_extraction(text, case_name):
             print(f"- 关系解析失败: {rel}")
     return result
 
+
 if __name__ == "__main__":
     text1 = '在2023年6月15日，北京的人工智能公司"深度智云"宣布与上海的科技巨头"未来科技"达成战略合作协议。根据协议，深度智云将为未来科技开发基于大语言模型的智能客服系统，该系统将集成自然语言处理和计算机视觉技术，预计在2024年3月正式上线。深度智云的首席执行官李明博士表示，此次合作将加速人工智能技术在金融、医疗和教育领域的应用。未来科技的董事会主席王建国先生则强调，双方将共同投资5亿元人民币，在深圳建立一个联合研发中心，专注于生成式AI和多模态交互技术的研究。此外，著名科学家张教授也将加入该项目，担任技术顾问。这一合作被行业专家认为是AI领域的里程碑事件，将重塑中国科技产业的格局。'
-    test_extraction(text1, "商业合作新闻")
+
+    result = test_extraction(text1, "商业合作新闻")
+
+    # ✅ 写入 JSON 文件
+    output_json_path = "extracted_result.json"
+    with open(output_json_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+
+    print(f"\n✅ 抽取结果已保存为 JSON 文件: {output_json_path}")
