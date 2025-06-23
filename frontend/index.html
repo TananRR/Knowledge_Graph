@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>知识图谱可视化演示</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        svg {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #legend {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <svg></svg>
+
+    <div id="legend">
+        <strong>实体类型图例</strong>
+        <div><span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>Person</div>
+        <div><span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>Organization</div>
+    </div>
+
+    <script src="js/graph.js"></script>
+</body>
+</html>
