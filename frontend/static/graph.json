@@ -1,0 +1,9 @@
+{
+  "entities": [
+    { "id": "e1", "name": "比尔盖茨", "type": "Person" },
+    { "id": "e2", "name": "微软", "type": "Organization" }
+  ],
+  "relations": [
+    { "source": "e1", "target": "e2", "type": "创立" }
+  ]
+}
