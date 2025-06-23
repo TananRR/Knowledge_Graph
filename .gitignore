@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 *.sqlite3
+*.log
 .env
-media/
 .idea/
-venv/
+*.ipynb
