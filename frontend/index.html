@@ -1,63 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <title>知识图谱可视化演示</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.9/lib/umd.min.js"></script>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        svg {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-        #legend {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        #search-bar {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(255,255,255,0.95);
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        #search-bar input, #search-bar button {
-            margin-right: 5px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>知识图谱可视化演示</title>
+
+  <!-- 引入 D3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- 引入最新 canvg v3 UMD 版 -->
+  <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    svg {
+      width: 100vw; height: 100vh; display: block;
+    }
+    #search-bar {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    #search-bar input, #search-bar button {
+      margin-right: 5px;
+    }
+    #legend {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="search-bar">
-        <input type="text" id="searchInput" placeholder="请输入关键词" style="padding:5px; width:200px;" />
-        <button onclick="focusNode()">聚焦实体</button>
-        <button onclick="exportPNG()">导出 PNG</button>
-        <button onclick="exportJSON()">导出 JSON</button>
-    </div>
 
-    <svg></svg>
+  <div id="search-bar">
+    <input type="text" id="searchInput" placeholder="请输入关键词" style="padding:5px; width:200px;" />
+    <button onclick="focusNode()">聚焦实体</button>
+    <button onclick="exportPNG()">导出 PNG</button>
+    <button onclick="exportJSON()">导出 JSON</button>
+  </div>
 
-    <div id="legend">
-        <strong>实体类型图例</strong>
-        <div><span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>Person</div>
-        <div><span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>Organization</div>
-    </div>
+  <svg></svg>
 
-    <script src="js/graph.js"></script>
+  <div id="legend">
+    <strong>实体类型图例</strong>
+    <div><span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>Person</div>
+    <div><span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>Organization</div>
+  </div>
+
+  <!-- 自定义功能逻辑 -->
+  <script src="js/graph.js"></script>
+
 </body>
 </html>
