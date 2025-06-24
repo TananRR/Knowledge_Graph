@@ -1,8 +1,13 @@
-from py2neo import Graph
+from neo4j import GraphDatabase
 
-# Neo4j连接配置
-NEO4J_URL = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "testpassword"  # 和docker-compose.yml中设置的一致
+# 配置你的 Neo4j 连接信息
+URI = "bolt://localhost:7687"
+USER = "neo4j"
+PASSWORD = "testpassword"  # 替换为你的实际密码
 
-graph = Graph(NEO4J_URL, auth=(NEO4J_USER, NEO4J_PASSWORD))
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+
+def run_cypher(query, parameters=None):
+    with driver.session() as session:
+        result = session.run(query, parameters)
+        return [dict(record) for record in result]
