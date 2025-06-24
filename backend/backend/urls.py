@@ -21,6 +21,6 @@ from django.urls import path, include  # ← 加上 include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('kgapi.urls')),  # ← 加上这行
+    # path('api/', include('kgapi.urls')),  # ← 加上这行
 ]
 
