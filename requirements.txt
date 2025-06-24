@@ -5,3 +5,5 @@ py2neo>=2021
 pandas
 tqdm
 requests
+neo4j
+djangorestframework
