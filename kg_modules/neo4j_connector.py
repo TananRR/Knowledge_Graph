@@ -1,14 +1,13 @@
-# kg_modules/neo4j_connector.py
+from neo4j import GraphDatabase
 
-from py2neo import Graph
+# 配置你的 Neo4j 连接信息
+URI = "bolt://localhost:7687"
+USER = "neo4j"
+PASSWORD = "testpassword"  # 替换为你的实际密码
 
-# Neo4j连接配置
-NEO4J_URL = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "testpassword"
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-graph = Graph(NEO4J_URL, auth=(NEO4J_USER, NEO4J_PASSWORD))
-
-def run_cypher(cypher_query, parameters=None):
-    result = graph.run(cypher_query, parameters or {})
-    return [dict(record) for record in result]
+def run_cypher(query, parameters=None):
+    with driver.session() as session:
+        result = session.run(query, parameters)
+        return [dict(record) for record in result]
