@@ -1,24 +1,56 @@
 version: "3.9"
 
 services:
-  web:
-    build: .
+  # 1. Django 后端服务
+  backend:
+    build:
+      context: ../  # 项目根目录（因为 Dockerfile.backend 在 deploy 目录外）
+      dockerfile: deploy/Dockerfile.backend  # 指定后端 Dockerfile 路径
+    command: python backend/manage.py runserver 0.0.0.0:8000  # 开发环境启动命令
     ports:
-      - "8000:8000"
+      - "8000:8000"  # 映射到主机端口，前端可访问
     volumes:
-      - .:/app
+      - ../:/app  # 代码挂载，修改本地代码实时同步到容器
+    env_file:
+      - .env.example  #后面换成.env # 加载环境变量（需与 .env.example 对应）
     depends_on:
-      - neo4j
-
+      - neo4j  # 依赖 Neo4j 数据库
+    networks:
+      - app-net
+  
+  # 2. Neo4j 数据库服务
   neo4j:
-    image: neo4j:5.18
+    image: neo4j:5.18  # 官方镜像
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "7474:7474"  # Web 管理界面（浏览器访问）
+      - "7687:7687"  # Bolt 协议端口（Django 连接用）
     environment:
+      # NEO4J_AUTH: ${NEO4J_AUTH}  # 从 .env 取认证信息
+      # NEO4J_dbms_default__database: neo4j # ${NEO4J_DB_NAME}  # 数据库名
       NEO4J_AUTH: neo4j/testpassword
+
     volumes:
-      - neo4j_data:/data
+      - neo4j_data:/data  # 持久化数据，避免容器删除丢失
+    networks:
+      - app-net
+
+  # 3. 前端静态服务（Nginx 托管）
+  frontend:
+    image: nginx:alpine  # 轻量 Nginx 镜像
+    ports:
+      - "80:80"  # 主机 80 端口映射到 Nginx，浏览器直接访问
+    volumes:
+      - ../frontend:/usr/share/nginx/html    # 挂载前端静态文件（index.html、static 等）
+      - ./nginx/conf.d:/etc/nginx/conf.d  # 挂载 Nginx 配置（自定义反向代理）
+    depends_on:
+      - backend  # 确保后端启动后再暴露前端（可选，根据需求调整）
+    networks:
+      - app-net
+
+# 网络配置（让各服务互通，比如 backend 访问 neo4j:7687）
+networks:
+  app-net:
+    driver: bridge
 
 volumes:
   neo4j_data:
