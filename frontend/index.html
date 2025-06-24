@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>知识图谱可视化演示</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.9/lib/umd.min.js"></script>
     <style>
         html, body {
             margin: 0;
@@ -27,9 +28,28 @@
             font-size: 14px;
             line-height: 1.5;
         }
+        #search-bar {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        #search-bar input, #search-bar button {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
+    <div id="search-bar">
+        <input type="text" id="searchInput" placeholder="请输入关键词" style="padding:5px; width:200px;" />
+        <button onclick="focusNode()">聚焦实体</button>
+        <button onclick="exportPNG()">导出 PNG</button>
+        <button onclick="exportJSON()">导出 JSON</button>
+    </div>
+
     <svg></svg>
 
     <div id="legend">
