@@ -3,7 +3,7 @@ import json
 import re
 
 # 连接 Neo4j
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
+driver = GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "testpassword"))
 
 # 校验关系类型合法性（只允许字母、数字和下划线，防止Cypher注入）
 def sanitize_relation_type(rel_type):
