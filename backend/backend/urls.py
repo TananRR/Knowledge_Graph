@@ -17,12 +17,12 @@ Including another URLconf
 # backend/urls.py
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,include
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
+    path('api/', include('kgapi.urls')),  # 这行就是包含kgapi的路由
 ]
 

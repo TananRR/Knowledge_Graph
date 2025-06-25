@@ -61,3 +61,129 @@
     <script src="js/graph.js"></script>
 </body>
 </html>
+
+<script>
+// 查询接口并根据返回数据画图（增加CORS错误友好提示）
+async function queryPersonAndDraw() {
+    const name = document.getElementById('searchInput').value.trim();
+    if (!name) {
+        alert('请输入要查询的实体名称');
+        return;
+    }
+    // 修正URL，需加http://前缀
+    const url = `http://localhost:8000/api/person_with_optional_relations?name=${encodeURIComponent(name)}`;
+    try {
+        // 增加调试输出
+        console.log("请求URL:", url);
+        // 增加 fetch 的超时和CORS错误处理
+        let response;
+        try {
+            response = await fetch(url);
+        } catch (fetchErr) {
+            // 这里很可能是CORS问题
+            alert('请求失败，可能是跨域（CORS）问题或后端未启动。\n\n请确保：\n1. 后端服务已启动并监听8000端口。\n2. 后端允许跨域访问（CORS）。\n\n如为CORS问题，请在后端添加CORS支持（如django-cors-headers）。\n\n详细错误：' + fetchErr);
+            console.error('fetch异常详情:', fetchErr);
+            return;
+        }
+        if (!response.ok) {
+            alert('查询失败，请检查后端服务是否启动，或后端未正确响应。\nHTTP状态码: ' + response.status);
+            return;
+        }
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonErr) {
+            alert('后端返回内容不是有效的JSON，可能是CORS拦截或后端报错。\n\n请检查浏览器控制台的网络(Network)面板，确认响应内容。\n\n详细错误：' + jsonErr);
+            console.error('JSON解析异常:', jsonErr);
+            return;
+        }
+        // 输出后端返回数据，便于调试
+        console.log("后端返回数据:", data);
+
+        if (!data.found) {
+            alert('未找到该人物');
+            return;
+        }
+
+        // 构造节点和边
+        const nodes = [];
+        const links = [];
+
+        // 主体人物节点
+        if (data.person && data.person.name) {
+            nodes.push({
+                id: data.person.name,
+                name: data.person.name,
+                type: "Person",
+                born: data.person.born
+            });
+        } else {
+            alert('后端数据格式异常：缺少person信息');
+            console.error('person字段内容:', data.person);
+            return;
+        }
+
+        // 邻居节点
+        if (Array.isArray(data.neighbors)) {
+            data.neighbors.forEach(nei => {
+                // 兼容后端返回的类型字段
+                nodes.push({
+                    id: nei.name,
+                    name: nei.name,
+                    type: nei.type || "Organization", // 优先用后端type
+                    des: nei.des
+                });
+                // 与主节点连边
+                links.push({
+                    source: data.person.name,
+                    target: nei.name,
+                    label: nei.des || ""
+                });
+            });
+        } else {
+            // 允许neighbors为空，不报错
+            console.warn('neighbors字段不是数组:', data.neighbors);
+        }
+
+        // 关系（如有更详细关系可补充）
+        if (Array.isArray(data.relations)) {
+            data.relations.forEach(rel => {
+                // 假设后端返回的关系结构为 {source, target, label/type/verb}
+                if (rel.source && rel.target) {
+                    links.push({
+                        source: rel.source,
+                        target: rel.target,
+                        label: rel.label || rel.type || rel.verb || ""
+                    });
+                } else {
+                    console.warn('关系数据格式异常:', rel);
+                }
+            });
+        } else {
+            // 允许relations为空，不报错
+            console.warn('relations字段不是数组:', data.relations);
+        }
+
+        // 调用画图函数（假设graph.js中有drawGraph方法）
+        if (typeof drawGraph === "function") {
+            console.log("调用drawGraph，nodes:", nodes, "links:", links);
+            drawGraph(nodes, links);
+        } else {
+            alert('未找到画图方法，请检查graph.js');
+        }
+    } catch (e) {
+        // 更详细的错误信息
+        alert('查询或绘图出错: ' + e + '\n\n如为CORS相关报错，请在后端添加CORS支持（如django-cors-headers），并重启后端服务。');
+        console.error('异常详情:', e);
+    }
+}
+
+// 绑定聚焦实体按钮
+function focusNode() {
+    queryPersonAndDraw();
+}
+
+// 可选：页面加载时自动查询一次
+// window.onload = queryPersonAndDraw;
+</script>
+

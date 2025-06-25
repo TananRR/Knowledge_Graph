@@ -28,6 +28,7 @@ services:
       # NEO4J_AUTH: ${NEO4J_AUTH}  # 从 .env 取认证信息
       # NEO4J_dbms_default__database: neo4j # ${NEO4J_DB_NAME}  # 数据库名
       NEO4J_AUTH: neo4j/testpassword
+      
 
     volumes:
       - neo4j_data:/data  # 持久化数据，避免容器删除丢失

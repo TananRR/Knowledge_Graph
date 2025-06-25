@@ -5,3 +5,4 @@ py2neo>=2021
 pandas
 tqdm
 requests
+django-cors-headers
