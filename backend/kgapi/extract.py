@@ -2,10 +2,10 @@ import json
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-# from PyPDF2 import PdfReader
 from docx import Document
 import fitz  # PyMuPDF
 import pdfplumber
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
