@@ -1,13 +1,13 @@
-// graph.js
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON } from './api.js';
 
 let currentData = null;
 let simulationRef = null;
 let nodeRef = null;
+let linkRef = null;
 let svgRef = null;
 let zoomBehavior = null;
 
-export function renderGraph(graphDataRaw) {
+export function renderGraph(graphData) {
   d3.select("svg").selectAll("*").remove();
 
   const svg = d3.select("svg");
@@ -38,22 +38,30 @@ export function renderGraph(graphDataRaw) {
     .attr("d", "M0,-5L10,0L0,5")
     .attr("fill", "#aaa");
 
-  // 拷贝数据防止修改原数据
-  const graphData = {
-    entities: graphDataRaw.entities.map(d => ({ ...d })),
-    relations: graphDataRaw.relations.map(d => ({
-      ...d,
-      source: d.source,
-      target: d.target
-    }))
-  };
+  // 验证数据
+  if (!graphData || !graphData.entities || !graphData.relations) {
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", height / 2)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#f00")
+      .text("错误：无效的图谱数据");
+    return;
+  }
+
   currentData = graphData;
 
-  // 力导向布局
+  // 创建力导向图模拟
   const simulation = d3.forceSimulation(graphData.entities)
-    .force("link", d3.forceLink(graphData.relations).id(d => d.id).distance(200))
+    .force("link", d3.forceLink(graphData.relations)
+      .id(d => d.id)
+      .distance(150)
+      .strength(0.8))
     .force("charge", d3.forceManyBody().strength(-500))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+    .force("collide", d3.forceCollide().radius(30).strength(0.7))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .alphaDecay(0.05);
+
   simulationRef = simulation;
 
   // 画关系线
@@ -63,7 +71,10 @@ export function renderGraph(graphDataRaw) {
     .enter()
     .append("line")
     .attr("stroke", "#aaa")
+    .attr("stroke-width", 1.5)
     .attr("marker-end", "url(#arrow)");
+
+  linkRef = link;
 
   // 关系文本标签
   const linkLabel = container.append("g")
@@ -81,8 +92,15 @@ export function renderGraph(graphDataRaw) {
     .data(graphData.entities)
     .enter()
     .append("circle")
-    .attr("r", 20)
-    .attr("fill", d => d.type === "Person" ? "#1f77b4" : "#ff7f0e")
+    .attr("r", d => d.type === "Person" ? 20 : 15) // 人节点稍大
+    .attr("fill", d => {
+      switch(d.type) {
+        case "Person": return "#1f77b4";
+        case "Location": return "#ff7f0e";
+        case "Interest": return "#2ca02c";
+        default: return "#9467bd";
+      }
+    })
     .call(d3.drag()
       .on("start", dragStarted)
       .on("drag", dragged)
@@ -101,6 +119,7 @@ export function renderGraph(graphDataRaw) {
     .attr("dx", 25)
     .attr("dy", ".35em");
 
+  // 模拟更新函数
   simulation.on("tick", () => {
     link
       .attr("x1", d => d.source.x)
@@ -121,21 +140,19 @@ export function renderGraph(graphDataRaw) {
       .attr("y", d => (d.source.y + d.target.y) / 2);
   });
 
-  // 点击弹窗显示节点信息
+  // 交互事件
   node.on("click", (event, d) => {
     alert(`实体名称：${d.name}\n类型：${d.type}\nID：${d.id}`);
   });
 
-  // 鼠标悬浮高亮相关节点和连线
   node
-    .on("mouseover", function (event, d) {
+    .on("mouseover", function(event, d) {
       node.attr("opacity", o =>
         o.id === d.id || graphData.relations.some(rel =>
           (rel.source.id === d.id && rel.target.id === o.id) ||
           (rel.target.id === d.id && rel.source.id === o.id)
         ) ? 1 : 0.2
       );
-
       link.attr("stroke", rel =>
         rel.source.id === d.id || rel.target.id === d.id ? "#f00" : "#aaa"
       );
@@ -145,7 +162,7 @@ export function renderGraph(graphDataRaw) {
       link.attr("stroke", "#aaa");
     });
 
-  // 拖拽事件
+  // 拖拽函数
   function dragStarted(event, d) {
     if (!event.active) simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
@@ -166,7 +183,7 @@ export function renderGraph(graphDataRaw) {
 
 export function focusNode() {
   const keyword = document.getElementById("searchInput").value.trim();
-  if (!keyword || !currentData) return;
+  if (!keyword || !currentData || !simulationRef || !nodeRef || !linkRef) return;
 
   const match = currentData.entities.find(n => n.name.includes(keyword));
   if (!match) {
@@ -174,10 +191,57 @@ export function focusNode() {
     return;
   }
 
-  const svg = svgRef;
   const width = window.innerWidth;
   const height = window.innerHeight;
+  const simulation = simulationRef;
+  const svg = svgRef;
 
+  // 确保节点有有效坐标
+  if (isNaN(match.x) || isNaN(match.y)) {
+    match.x = width / 2;
+    match.y = height / 2;
+  }
+
+  // 暂停模拟并清除所有固定位置
+  simulation.stop();
+  currentData.entities.forEach(node => {
+    node.fx = null;
+    node.fy = null;
+  });
+
+  // 固定焦点节点在中心
+  match.fx = width / 2;
+  match.fy = height / 2;
+
+  // 获取邻居节点并确保有有效坐标
+  const neighbors = currentData.relations
+    .filter(rel => rel.source.id === match.id || rel.target.id === match.id)
+    .map(rel => (rel.source.id === match.id ? rel.target : rel.source))
+    .map(node => {
+      if (isNaN(node.x)) node.x = match.x + (Math.random() - 0.5) * 100;
+      if (isNaN(node.y)) node.y = match.y + (Math.random() - 0.5) * 100;
+      return node;
+    });
+
+  // 环形布局邻居节点
+  const radius = Math.min(200, 50 + neighbors.length * 20);
+  const angleStep = (2 * Math.PI) / neighbors.length;
+  neighbors.forEach((neighbor, i) => {
+    const angle = i * angleStep;
+    neighbor.fx = match.fx + radius * Math.cos(angle);
+    neighbor.fy = match.fy + radius * Math.sin(angle);
+  });
+
+  // 重新初始化力导向图
+  simulation
+    .force("link", d3.forceLink(currentData.relations).id(d => d.id).distance(150))
+    .alpha(1)
+    .restart();
+
+  // 强制更新连线位置
+  simulation.tick(10); // 执行10次迭代以稳定布局
+
+  // 应用缩放变换
   const scale = 1.5;
   const translateX = width / 2 - scale * match.x;
   const translateY = height / 2 - scale * match.y;
@@ -187,18 +251,65 @@ export function focusNode() {
     .call(
       zoomBehavior.transform,
       d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+    )
+    .on("end", () => {
+      setTimeout(() => {
+        // 释放固定位置，让布局自然发展
+        match.fx = null;
+        match.fy = null;
+        neighbors.forEach(n => {
+          n.fx = null;
+          n.fy = null;
+        });
+        simulation.alpha(0.3).restart();
+      }, 1000);
+    });
+
+  // 高亮显示
+  nodeRef
+    .attr("stroke", d =>
+      d.id === match.id || neighbors.some(n => n.id === d.id) ? "#ff0000" : "none"
+    )
+    .attr("stroke-width", d =>
+      d.id === match.id || neighbors.some(n => n.id === d.id) ? 3 : 1
     );
 
+  linkRef
+    .attr("stroke", d =>
+      d.source.id === match.id || d.target.id === match.id ? "#f00" : "#aaa"
+    )
+    .attr("stroke-width", d =>
+      d.source.id === match.id || d.target.id === match.id ? 2.5 : 1.5
+    );
+}
+
+export function cancelFocus() {
+  if (!currentData || !simulationRef || !nodeRef || !linkRef) return;
+
+  // 重置所有节点和连线样式
   nodeRef
-    .filter(d => d.id === match.id)
-    .transition()
-    .duration(200)
-    .attr("stroke", "#ff0000")
-    .attr("stroke-width", 4)
-    .transition()
-    .duration(800)
-    .attr("stroke", "#000")
-    .attr("stroke-width", 0);
+    .attr("stroke", "none")
+    .attr("stroke-width", 1)
+    .attr("fill", d => d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e"));
+
+  linkRef
+    .attr("stroke", "#aaa")
+    .attr("stroke-width", 1.5);
+
+  // 重置高亮标记
+  if (currentData.entities) {
+    currentData.entities.forEach(entity => {
+      entity.highlight = false;
+    });
+  }
+
+  // 重置模拟
+  simulationRef.alpha(0.1).restart();
+
+  // 重置缩放
+  svgRef.transition()
+    .duration(750)
+    .call(zoomBehavior.transform, d3.zoomIdentity);
 }
 
 export async function exportPNG() {
@@ -240,15 +351,6 @@ export async function exportPNG() {
   link.click();
 }
 
-window.loadGraph = async function () {
-  try {
-    const data = await fetchGraphData();
-    renderGraph(data);
-  } catch (err) {
-    alert("图谱数据加载失败！");
-    console.error(err);
-  }
-};
 
 window.handleUpload = async function () {
   const input = document.getElementById("upload-file");
@@ -262,6 +364,11 @@ window.handleUpload = async function () {
     const result = await uploadTextFile(file);
     if (result.code === 0) {
       alert("上传并更新成功！");
+
+      // 重新启用按钮
+      document.querySelector("button[onclick='focusNode()']").disabled = false;
+      document.querySelector("button[onclick='handleSearch()']").disabled = false;
+
       await loadGraph();
     } else {
       alert("上传失败：" + result.msg);
@@ -286,29 +393,22 @@ window.handleSearch = async function () {
       return;
     }
 
-    const newEntities = results.map(d => ({
-      id: d.id,
-      name: d.name,
-      type: d.type
-    }));
+    // 高亮匹配的节点，而不是添加新节点
+    const matchedIds = results.map(d => d.id);
+    if (currentData && currentData.entities) {
+      currentData.entities.forEach(entity => {
+        entity.highlight = matchedIds.includes(entity.id);
+      });
 
-    if (!currentData) currentData = { entities: [], relations: [] };
-    const existingIds = new Set(currentData.entities.map(e => e.id));
-    const uniqueEntities = newEntities.filter(e => !existingIds.has(e.id));
+      // 更新节点样式
+      nodeRef.attr("fill", d =>
+        d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e")
+      );
 
-    if (!uniqueEntities.length) {
+      // 如果有匹配结果，聚焦到第一个匹配节点
       document.getElementById("searchInput").value = results[0].name;
       focusNode();
-      return;
     }
-
-    currentData.entities.push(...uniqueEntities);
-
-    // 重新渲染
-    renderGraph(currentData);
-
-    document.getElementById("searchInput").value = results[0].name;
-    setTimeout(() => focusNode(), 500);
 
   } catch (err) {
     alert("查询失败！");
@@ -318,4 +418,29 @@ window.handleSearch = async function () {
 
 window.exportJSON = downloadGraphJSON;
 // 页面加载时调用
-window.onload = loadGraph;
+window.onload = async function() {
+  try {
+    const graphData = await fetchGraphData();
+
+    if (!graphData || !graphData.entities || graphData.entities.length === 0) {
+      // 清空SVG并显示提示
+      d3.select("svg").selectAll("*").remove();
+      d3.select("svg").append("text")
+        .attr("x", window.innerWidth / 2)
+        .attr("y", window.innerHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "20px")
+        .attr("fill", "#666")
+        .text("图谱中没有数据，请先上传数据");
+
+      // 禁用搜索和聚焦按钮
+      document.querySelector("button[onclick='focusNode()']").disabled = true;
+      document.querySelector("button[onclick='handleSearch()']").disabled = true;
+    } else {
+      renderGraph(graphData);
+    }
+  } catch (err) {
+    alert("图谱数据加载失败！");
+    console.error(err);
+  }
+};
