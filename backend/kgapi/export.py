@@ -4,7 +4,7 @@ from django.views.decorators.http import require_http_methods
 from neo4j import GraphDatabase
 
 # Neo4j 数据库连接配置
-NEO4J_URI = "bolt://localhost:7687"
+NEO4J_URI = "bolt://neo4j:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "testpassword"
 
@@ -45,22 +45,23 @@ def query_knowledge_graph():
     with driver.session() as session:
         result = session.run("""
             MATCH (n)-[r]->(m)
-            RETURN n, r, m
+            RETURN n, type(r) as rel_type, m
         """)
 
-        # 将查询结果转换为字典格式
         data = []
         for record in result:
-            node1 = record["n"].items()
-            relationship = record["r"].items()
-            node2 = record["m"].items()
+            node1 = dict(record["n"])  # 将 Node 转为 dict
+            node2 = dict(record["m"])  # 将 Node 转为 dict
+            rel_type = record["rel_type"]
+
             data.append({
-                "node1": dict(node1),
-                "relationship": dict(relationship),
-                "node2": dict(node2)
+                "node1": node1,
+                "relationship": {"type": rel_type},
+                "node2": node2
             })
 
         return data
+
 
 
 def export_to_json(data):
