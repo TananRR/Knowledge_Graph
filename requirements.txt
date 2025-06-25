@@ -5,5 +5,10 @@ py2neo>=2021
 pandas
 tqdm
 requests
-neo4j
+neo4j~=5.28.1
 djangorestframework
+django-cors-headers
+python-docx
+pdfplumber~=0.11.7
+PyMuPDF
+numpy>=1.21,<2.0
