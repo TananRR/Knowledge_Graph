@@ -15,20 +15,26 @@ driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 @require_http_methods(["GET"])
 def export_knowledge_graph(request):
     """
-    导出知识图谱的接口
+    导出知识图谱的接口：
+    - 若无参数，则直接返回 JSON 数据用于前端渲染；
+    - 若带有 ?download=true 参数，则作为附件下载 JSON 文件。
     """
     try:
-        # 查询知识图谱中的所有节点和关系
         data = query_knowledge_graph()
 
-        # 将数据导出为 JSON 文件
-        export_to_json(data)
+        # 判断是否需要作为附件下载
+        if request.GET.get("download") == "true":
+            response = HttpResponse(
+                json.dumps(data, ensure_ascii=False, indent=4),
+                content_type="application/json"
+            )
+            response["Content-Disposition"] = 'attachment; filename="knowledge_graph_export.json"'
+            return response
 
-        # 返回成功响应
-        return JsonResponse({"message": "知识图谱已成功导出为 JSON 文件"}, status=200)
+        # 否则返回 JSON 对象（前端渲染用）
+        return JsonResponse(data, safe=False)
 
     except Exception as e:
-        # 返回错误响应
         return JsonResponse({"error": str(e)}, status=500)
 
 

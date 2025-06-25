@@ -19,12 +19,9 @@
     }
     #search-bar {
       position: absolute;
-      top: 10px;
-      left: 20px;
-      z-index: 1000;
+      top: 10px; left: 20px; z-index: 1000;
       background: rgba(255,255,255,0.95);
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 10px; border: 1px solid #ccc;
     }
     #search-bar input, #search-bar button {
       margin: 5px 5px 5px 0;
@@ -32,28 +29,22 @@
     }
     #legend {
       position: absolute;
-      top: 10px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 10px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      line-height: 1.5;
+      top: 10px; right: 20px;
+      background: rgba(255,255,255,0.95);
+      padding: 10px; border: 1px solid #ccc;
+      font-size: 14px; line-height: 1.5;
     }
   </style>
 </head>
 
 <body>
-
   <div id="search-bar">
     <input type="text" id="searchInput" placeholder="请输入关键词" style="width:200px;" />
     <button onclick="handleSearch()">查询节点</button>
     <br />
-
     <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
     <button onclick="handleUpload()">上传图谱数据</button>
     <br />
-
     <button onclick="focusNode()">聚焦实体</button>
     <button onclick="exportPNG()">导出 PNG</button>
     <button onclick="exportJSON()">导出 JSON</button>
@@ -63,58 +54,16 @@
 
   <div id="legend">
     <strong>实体类型图例</strong>
-    <div><span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>Person</div>
-    <div><span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>Organization</div>
+    <div>
+      <span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>
+      Person
+    </div>
+    <div>
+      <span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>
+      Organization
+    </div>
   </div>
 
-
-<!-- ✅ 添加这段 -->
-<script src="./js/graph.js"></script>
-<script type="module">
-  import { uploadTextFile, searchNodes } from './js/api.js';
-
-  window.handleUpload = async function () {
-    const input = document.getElementById("upload-file");
-    const file = input.files[0];
-    if (!file) {
-      alert("请先选择文件！");
-      return;
-    }
-
-    try {
-      const result = await uploadTextFile(file);
-      if (result.code === 0) {
-        alert("上传并更新成功！");
-        // 若需刷新图谱数据，可以调用 loadGraph()
-        loadGraph();
-      } else {
-        alert("失败：" + result.msg);
-      }
-    } catch (err) {
-      alert("请求失败，请检查后端服务");
-      console.error(err);
-    }
-  };
-
-  window.handleSearch = async function () {
-    const keyword = document.getElementById("searchInput").value.trim();
-    if (!keyword) {
-      alert("请输入关键词！");
-      return;
-    }
-
-    try {
-      const results = await searchNodes(keyword);
-      console.log("查询结果：", results);
-      // 如果你想用返回结果聚焦某个节点，可以提取 name 然后设置搜索框再调用 focusNode()
-      // 比如：document.getElementById("searchInput").value = results[0].name; focusNode();
-    } catch (err) {
-      alert("查询失败！");
-      console.error(err);
-    }
-  };
-</script>
-
-
+ <script type="module" src="./js/graph.js"></script>
 </body>
 </html>

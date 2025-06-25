@@ -1,16 +1,13 @@
+// graph.js
+import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON } from './api.js';
+
 let currentData = null;
 let simulationRef = null;
 let nodeRef = null;
 let svgRef = null;
-let zoomBehavior = null;  // 保存zoom实例
+let zoomBehavior = null;
 
-function loadGraph() {
-  d3.json("static/graph.json")
-    .then(data => renderGraph(data))
-    .catch(err => alert("加载失败：" + err));
-}
-
-function renderGraph(graphDataRaw) {
+export function renderGraph(graphDataRaw) {
   d3.select("svg").selectAll("*").remove();
 
   const svg = d3.select("svg");
@@ -28,6 +25,7 @@ function renderGraph(graphDataRaw) {
 
   svg.call(zoomBehavior);
 
+  // 定义箭头标记
   svg.append("defs").append("marker")
     .attr("id", "arrow")
     .attr("viewBox", "0 -5 10 10")
@@ -40,6 +38,7 @@ function renderGraph(graphDataRaw) {
     .attr("d", "M0,-5L10,0L0,5")
     .attr("fill", "#aaa");
 
+  // 拷贝数据防止修改原数据
   const graphData = {
     entities: graphDataRaw.entities.map(d => ({ ...d })),
     relations: graphDataRaw.relations.map(d => ({
@@ -50,12 +49,14 @@ function renderGraph(graphDataRaw) {
   };
   currentData = graphData;
 
+  // 力导向布局
   const simulation = d3.forceSimulation(graphData.entities)
     .force("link", d3.forceLink(graphData.relations).id(d => d.id).distance(200))
     .force("charge", d3.forceManyBody().strength(-500))
     .force("center", d3.forceCenter(width / 2, height / 2));
   simulationRef = simulation;
 
+  // 画关系线
   const link = container.append("g")
     .selectAll("line")
     .data(graphData.relations)
@@ -64,6 +65,7 @@ function renderGraph(graphDataRaw) {
     .attr("stroke", "#aaa")
     .attr("marker-end", "url(#arrow)");
 
+  // 关系文本标签
   const linkLabel = container.append("g")
     .selectAll("text")
     .data(graphData.relations)
@@ -73,6 +75,7 @@ function renderGraph(graphDataRaw) {
     .attr("font-size", 10)
     .attr("fill", "#666");
 
+  // 画节点圆圈
   const node = container.append("g")
     .selectAll("circle")
     .data(graphData.entities)
@@ -87,6 +90,7 @@ function renderGraph(graphDataRaw) {
 
   nodeRef = node;
 
+  // 节点文字标签
   const label = container.append("g")
     .selectAll("text")
     .data(graphData.entities)
@@ -117,10 +121,12 @@ function renderGraph(graphDataRaw) {
       .attr("y", d => (d.source.y + d.target.y) / 2);
   });
 
+  // 点击弹窗显示节点信息
   node.on("click", (event, d) => {
     alert(`实体名称：${d.name}\n类型：${d.type}\nID：${d.id}`);
   });
 
+  // 鼠标悬浮高亮相关节点和连线
   node
     .on("mouseover", function (event, d) {
       node.attr("opacity", o =>
@@ -139,6 +145,7 @@ function renderGraph(graphDataRaw) {
       link.attr("stroke", "#aaa");
     });
 
+  // 拖拽事件
   function dragStarted(event, d) {
     if (!event.active) simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
@@ -157,8 +164,7 @@ function renderGraph(graphDataRaw) {
   }
 }
 
-// 聚焦关键词节点，放大且居中
-function focusNode() {
+export function focusNode() {
   const keyword = document.getElementById("searchInput").value.trim();
   if (!keyword || !currentData) return;
 
@@ -172,7 +178,7 @@ function focusNode() {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
-  const scale = 1.5; // 放大倍数，按需调整
+  const scale = 1.5;
   const translateX = width / 2 - scale * match.x;
   const translateY = height / 2 - scale * match.y;
 
@@ -195,7 +201,7 @@ function focusNode() {
     .attr("stroke-width", 0);
 }
 
-async function exportPNG() {
+export async function exportPNG() {
   const svgElement = document.querySelector("svg");
   const serializer = new XMLSerializer();
   let svgString = serializer.serializeToString(svgElement);
@@ -212,20 +218,17 @@ async function exportPNG() {
   canvas.height = height * 2;
   const ctx = canvas.getContext("2d");
 
-  // 填充白色背景（非透明）
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 偏移 svg 使其从 (padding, padding) 开始绘制
   const translatedSvgString = svgString.replace(
     '<g>',
     `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
   );
 
-  // 使用 canvg 渲染
   const v = await canvg.Canvg.fromString(ctx, translatedSvgString, {
     ignoreDimensions: true,
-    ignoreClear: true,  // 避免清除背景
+    ignoreClear: true,
     scaleWidth: canvas.width,
     scaleHeight: canvas.height
   });
@@ -237,24 +240,82 @@ async function exportPNG() {
   link.click();
 }
 
+window.loadGraph = async function () {
+  try {
+    const data = await fetchGraphData();
+    renderGraph(data);
+  } catch (err) {
+    alert("图谱数据加载失败！");
+    console.error(err);
+  }
+};
 
-
-// 导出 JSON
-function exportJSON() {
-  if (!currentData) {
-    alert("无可导出的数据");
+window.handleUpload = async function () {
+  const input = document.getElementById("upload-file");
+  const file = input.files[0];
+  if (!file) {
+    alert("请先选择文件！");
     return;
   }
 
-  const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "graph.json";
-  a.click();
-  URL.revokeObjectURL(url);
-}
+  try {
+    const result = await uploadTextFile(file);
+    if (result.code === 0) {
+      alert("上传并更新成功！");
+      await loadGraph();
+    } else {
+      alert("上传失败：" + result.msg);
+    }
+  } catch (err) {
+    alert("请求失败，请检查后端服务");
+    console.error(err);
+  }
+};
 
+window.handleSearch = async function () {
+  const keyword = document.getElementById("searchInput").value.trim();
+  if (!keyword) {
+    alert("请输入关键词！");
+    return;
+  }
 
+  try {
+    const results = await searchNodes(keyword);
+    if (!results.length) {
+      alert("未找到相关实体！");
+      return;
+    }
+
+    const newEntities = results.map(d => ({
+      id: d.id,
+      name: d.name,
+      type: d.type
+    }));
+
+    if (!currentData) currentData = { entities: [], relations: [] };
+    const existingIds = new Set(currentData.entities.map(e => e.id));
+    const uniqueEntities = newEntities.filter(e => !existingIds.has(e.id));
+
+    if (!uniqueEntities.length) {
+      document.getElementById("searchInput").value = results[0].name;
+      focusNode();
+      return;
+    }
+
+    currentData.entities.push(...uniqueEntities);
+
+    // 重新渲染
+    renderGraph(currentData);
+
+    document.getElementById("searchInput").value = results[0].name;
+    setTimeout(() => focusNode(), 500);
+
+  } catch (err) {
+    alert("查询失败！");
+    console.error(err);
+  }
+};
+
+window.exportJSON = downloadGraphJSON;
 // 页面加载时调用
 window.onload = loadGraph;
