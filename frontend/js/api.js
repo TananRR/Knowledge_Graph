@@ -32,7 +32,7 @@ export async function uploadTextFile(file, onProgress = () => {}) {
     body: formData
   });
 
-  return handleResponse(resp); // { graph_id: ..., message: ... }
+  return handleResponse(resp);
 }
 
 // 拉取指定图谱数据
@@ -44,10 +44,31 @@ export async function fetchGraphData(graphId) {
 }
 
 // 删除图谱
-export async function deleteGraph(graphId) {
-  const resp = await fetch(`${BASE_URL}/graph/${graphId}/delete`, { method: "DELETE" });
-  return handleResponse(resp); // { message: "图谱已删除" }
+// 删除所有图谱 ✅ OK
+export async function deleteAllGraph() {
+  const resp = await fetch(`${BASE_URL}/delete/all/`, {
+    method: "DELETE"
+  });
+  return handleResponse(resp);
 }
+
+// 删除某个图谱 ✅ 使用 GET 参数传 graph_id
+export async function deleteGraphById(graphId) {
+  const resp = await fetch(`${BASE_URL}/delete/graph/?graph_id=${encodeURIComponent(graphId)}`, {
+    method: "DELETE"
+  });
+  return handleResponse(resp);
+}
+
+// 删除某用户的图谱 ✅ 使用 GET 参数传 user_id
+export async function deleteGraphByUser(userId) {
+  const resp = await fetch(`${BASE_URL}/delete/user/?user_id=${encodeURIComponent(userId)}`, {
+    method: "DELETE"
+  });
+  return handleResponse(resp);
+}
+
+
 
 // 导出图谱 JSON 文件
 export async function downloadGraphJSON(graphId) {

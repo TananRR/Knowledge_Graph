@@ -1,4 +1,4 @@
-import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON } from './api.js';
+import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON ,deleteAllGraph,deleteGraphById,deleteGraphByUser} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -377,6 +377,58 @@ window.handleUpload = async function () {
     }
   } catch (err) {
     alert("请求失败，请检查后端服务");
+    console.error(err);
+  }
+};
+
+// 删除全部图谱
+window.handleDeleteAll = async function () {
+  if (!confirm("确定删除所有图谱吗？此操作不可恢复！")) return;
+
+  try {
+    const result = await deleteAllGraph(); // 调用接口
+    alert(result.message || "所有图谱删除成功");
+    d3.select("svg").selectAll("*").remove();
+    currentData = null;
+    currentGraphId = null;
+  } catch (err) {
+    alert("删除失败，请检查后端服务");
+    console.error(err);
+  }
+};
+
+// 删除当前子图
+window.handleDeleteGraph = async function () {
+  if (!currentGraphId) return alert("当前没有选中的图谱！");
+  if (!confirm(`确定删除图谱 ${currentGraphId} 吗？`)) return;
+
+  try {
+    const result = await deleteGraphById(currentGraphId);
+    alert(result.message || "图谱删除成功");
+    d3.select("svg").selectAll("*").remove();
+    currentData = null;
+    currentGraphId = null;
+  } catch (err) {
+    alert("删除失败！");
+    console.error(err);
+  }
+};
+
+// 删除指定用户图谱（你可以通过 prompt 让用户输入 user_id）
+window.handleDeleteByUser = async function () {
+  const userId = prompt("请输入要删除的用户 ID：");
+  if (!userId) return;
+
+  if (!confirm(`确定删除用户 ${userId} 的所有图谱吗？`)) return;
+
+  try {
+    const result = await deleteGraphByUser(userId);
+    alert(result.message || "用户图谱删除成功");
+    d3.select("svg").selectAll("*").remove();
+    currentData = null;
+    currentGraphId = null;
+  } catch (err) {
+    alert("删除失败！");
     console.error(err);
   }
 };
