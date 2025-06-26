@@ -2,7 +2,6 @@
 import spacy
 from spacy.matcher import Matcher
 import json
-import numpy as np
 
 try:
     nlp = spacy.load("zh_core_web_md")
@@ -199,3 +198,8 @@ if __name__ == "__main__":
         json.dump(result, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ 抽取结果已保存为 JSON 文件: {output_json_path}")
+
+
+def extract_knowledge(text):
+    return extract_entities_relations(text)
+
