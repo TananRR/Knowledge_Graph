@@ -9,49 +9,83 @@
   <!-- 引入 canvg（导出 PNG 用） -->
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
 
-  <style>
-    html, body {
-      margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: "Microsoft YaHei", sans-serif;
-    }
-    svg {
-      width: 100vw; height: 100vh; display: block;
-    }
-    #search-bar {
-      position: absolute;
-      top: 10px; left: 20px; z-index: 1000;
-      background: rgba(255,255,255,0.95);
-      padding: 10px; border: 1px solid #ccc;
-    }
-    #search-bar input, #search-bar button {
-      margin: 5px 5px 5px 0;
-      padding: 5px;
-    }
-    #legend {
-      position: absolute;
-      top: 10px; right: 20px;
-      background: rgba(255,255,255,0.95);
-      padding: 10px; border: 1px solid #ccc;
-      font-size: 14px; line-height: 1.5;
-    }
-  </style>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    font-family: "Microsoft YaHei", sans-serif;
+  }
+  svg {
+    width: 100vw; height: 100vh; display: block;
+  }
+  #search-bar {
+    position: absolute;
+    top: 10px; left: 20px; z-index: 1000;
+    background: rgba(255,255,255,0.95);
+    padding: 10px; border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  #search-bar input, #search-bar button {
+    margin: 5px 5px 5px 0;
+    padding: 5px;
+  }
+
+  #legend {
+    position: absolute;
+    top: 10px; right: 20px;
+    background: rgba(255,255,255,0.95);
+    padding: 10px; border: 1px solid #ccc;
+    font-size: 14px; line-height: 1.5;
+    border-radius: 8px;
+  }
+
+  #top-panel {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    width: 100%;
+    background: rgba(255,255,255,0.95);
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    transition: top 0.3s ease;
+    z-index: 999;
+  }
+
+  #top-panel button {
+    margin: 0 5px;
+    padding: 5px 8px;
+  }
+
+  body:hover #top-panel {
+    top: 0;
+  }
+</style>
 </head>
 
 <body>
+  <!-- 常驻左侧工具栏 -->
   <div id="search-bar">
     <input type="text" id="searchInput" placeholder="请输入关键词" style="width:200px;" />
     <button onclick="handleSearch()">查询节点</button>
     <br />
     <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
     <button onclick="handleUpload()">上传图谱数据</button>
-    <br />
-    <button onclick="focusNode()">聚焦实体</button>
-    <button onclick="exportPNG()">导出 PNG</button>
-    <button onclick="exportJSON()">导出 JSON</button>
   </div>
 
+  <!-- 悬浮顶栏：鼠标移上去显示 -->
+  <div id="top-panel">
+    <button onclick="focusNode()">聚焦实体</button>
+    <button onclick="cancelFocus()">取消聚焦</button>
+    <button onclick="exportPNG()">导出 PNG</button>
+    <button onclick="exportJSON()">导出 JSON</button>
+    <button onclick="handleDeleteAll()">删除全部图谱</button>
+    <button onclick="handleDeleteGraph()">删除子图图谱</button>
+  </div>
+
+  <!-- SVG 图谱 -->
   <svg></svg>
 
+  <!-- 图例 -->
   <div id="legend">
     <strong>实体类型图例</strong>
     <div>
@@ -64,6 +98,6 @@
     </div>
   </div>
 
- <script type="module" src="./js/graph.js"></script>
+  <script type="module" src="./js/graph.js"></script>
 </body>
 </html>
