@@ -4,6 +4,7 @@ from django.urls import path
 from . import views
 from .delete import delete_all_graphs, delete_graph_by_id, delete_graphs_by_user
 from .extract import extract_text_from_file
+from .login import login,register,delete_user,change_password
 
 
 urlpatterns = [
@@ -14,4 +15,8 @@ urlpatterns = [
     path('delete/all/', delete_all_graphs),
     path('delete/graph/', delete_graph_by_id),
     path('delete/user/', delete_graphs_by_user),
+    path('login/',login),
+    path('register/',register),
+    path('delete_user/',delete_user),
+    path('change_password/',change_password),
 ]
