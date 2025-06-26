@@ -1,51 +1,38 @@
 from django.http import JsonResponse
-from kg_modules.neo4j_connector import run_cypher
+from .kg_writer import query_subgraph
+from neo4j import GraphDatabase
 
 import logging
 
 logger = logging.getLogger(__name__)
 
+# Neo4j 数据库连接配置
+NEO4J_URI = "bolt://neo4j:7687"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "testpassword"
+
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
 
 def search_entity(request):
-    logger.info(f"搜索请求: {request.GET}")
-
     keyword = request.GET.get("q", "")
     if not keyword:
-        logger.warning("未提供搜索关键词")
         return JsonResponse({"error": "请提供关键词参数 ?q=xxx"}, status=400)
 
-    logger.info(f"执行搜索: {keyword}")
-
-    cypher = """
-    MATCH (n)
-    WHERE 
-        toLower(n.name) CONTAINS toLower($name) OR
-        toString(n.id) CONTAINS $name
-    RETURN 
-        n,
-        labels(n) AS labels
-    LIMIT 20
-    """
-
     try:
-        logger.debug(f"执行Cypher查询: {cypher}")
-        from kg_modules.neo4j_connector import run_cypher
-        result = run_cypher(cypher, {"name": keyword})
-        logger.info(f"查询结果: {len(result)} 条记录")
+        with driver.session() as session:
+            graph_data = query_subgraph(session, keyword=keyword)
 
-        entities = []
-        for record in result:
-            node = record['n']
-            labels = record['labels']
+            # 转换格式保持兼容
+            entities = [
+                {
+                    **node["properties"],
+                    "type": node["labels"][0] if node["labels"] else "Unknown"
+                }
+                for node in graph_data["nodes"]
+            ]
 
-            entity = dict(node)
-            entity['type'] = labels[0] if labels else "Unknown"
-
-            entities.append(entity)
-
-        logger.debug(f"返回结果: {entities}")
-        return JsonResponse({"results": entities}, safe=False)
+            return JsonResponse({"results": entities}, safe=False)
 
     except Exception as e:
-        logger.exception("搜索失败")
         return JsonResponse({"error": str(e)}, status=500)
