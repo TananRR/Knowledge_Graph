@@ -367,21 +367,26 @@ window.handleUpload = async function () {
     const result = await uploadTextFile(file);
     if (result.graph_id) {
       alert("上传并更新成功！");
-      currentGraphId = result.graph_id;  // 保存 graph_id
-      // 启用按钮
-      document.querySelector("button[onclick='focusNode()']").disabled = false;
+      currentGraphId = result.graph_id;
       document.querySelector("button[onclick='handleSearch()']").disabled = false;
-      // 重新加载图谱数据，基于当前 graph_id
-      const graphData = await fetchGraphData(currentGraphId);
-      renderGraph(graphData);
+
+      try {
+        const graphData = await fetchGraphData(currentGraphId);
+        console.log("图谱数据：", graphData);  // 👉 看看是啥
+        renderGraph(graphData);
+      } catch (err2) {
+        alert("获取或渲染图谱失败！");
+        console.error("渲染失败：", err2);
+      }
     } else {
       alert("上传失败：" + (result.msg || "未知错误"));
     }
   } catch (err) {
-    alert("请求失败，请检查后端服务");
-    console.error(err);
+    alert("上传请求失败，请检查后端服务");
+    console.error("上传失败：", err);
   }
 };
+
 
 // 删除全部图谱
 window.handleDeleteAll = async function () {

@@ -3,105 +3,566 @@
 <head>
   <meta charset="UTF-8" />
   <title>知识图谱可视化演示</title>
-
   <!-- 引入 D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <!-- 引入 canvg（导出 PNG 用） -->
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
+  <!-- 引入 Font Awesome 图标 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-  html, body {
-    margin: 0; padding: 0; height: 100%; overflow: hidden;
-    font-family: "Microsoft YaHei", sans-serif;
-  }
-  svg {
-    width: 100vw; height: 100vh; display: block;
-  }
-  #search-bar {
-    position: absolute;
-    top: 10px; left: 20px; z-index: 1000;
-    background: rgba(255,255,255,0.95);
-    padding: 10px; border: 1px solid #ccc;
-    border-radius: 8px;
-  }
-  #search-bar input, #search-bar button {
-    margin: 5px 5px 5px 0;
-    padding: 5px;
+ :root {
+    --primary-color: #4361ee;
+    --primary-light: #4895ef;
+    --secondary-color: #3f37c9;
+    --accent-color: #f72585;
+    --success-color: #4cc9f0;
+    --warning-color: #f8961e;
+    --danger-color: #ef233c;
+    --background-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-color: #2b2d42;
+    --text-light: #8d99ae;
+    --border-color: #e9ecef;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+
+  svg {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    background-color: var(--card-bg);
+  }
+
+  /* 主工具栏 */
+   #main-toolbar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .toolbar-card {
+    background: var(--card-bg);
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    width: 260px;
+    backdrop-filter: blur(5px);
+    transition: var(--transition);
+  }
+
+ .toolbar-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  .toolbar-section {
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+   .toolbar-section:last-child {
+    margin-bottom: 0;
+  }
+  .toolbar-section:last-child::after {
+    display: none;
+  }
+  .toolbar-section::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    margin: 10px 0;
+  }
+<!--工具栏大小-->
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+
+  input, select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 12px;
+    transition: var(--transition);
+    background-color: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+  }
+
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+  }
+
+  input::placeholder {
+    color: var(--text-light);
+    opacity: 0.7;
+  }
+
+  button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    box-shadow: var(--shadow-sm);
+  }
+
+    button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+
+  button.secondary {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+  }
+
+  button.secondary:hover {
+    background-color: rgba(67, 97, 238, 0.1);
+  }
+
+  button.danger {
+    background-color: var(--danger-color);
+    margin-bottom: 12px;
+  }
+  button.danger:hover {
+    background-color: #d90429;
+  }
+
+  button.success {
+    background-color: var(--success-color);
+  }
+
+  button.success:hover {
+    background-color: #00b4d8;
+  }
+
+
+  /* 导出下拉菜单 */
+  .export-dropdown {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+  }
+
+  .export-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-md);
+  }
+
+  .export-btn:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .export-btn:active {
+    transform: translateY(0);
+  }
+
+  .export-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    margin-top: 0;
+    display: none;
+    min-width: 160px;
+    overflow: hidden;
+    z-index: 1002;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .export-options.show {
+    display: block;
+  }
+
+  .export-options button {
+    width: 100%;
+    border-radius: 0;
+    text-align: left;
+    padding: 10px 16px;
+    background: none;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    justify-content: flex-start;
+    box-shadow: none;
+  }
+
+  .export-options button:last-child {
+    border-bottom: none;
+  }
+
+  .export-options button:hover {
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--primary-color);
+    transform: none;
+  }
+
+
+  /* 图例 */
   #legend {
     position: absolute;
-    top: 10px; right: 20px;
-    background: rgba(255,255,255,0.95);
-    padding: 10px; border: 1px solid #ccc;
-    font-size: 14px; line-height: 1.5;
-    border-radius: 8px;
-  }
-
-  #top-panel {
-    position: absolute;
-    top: -60px;
-    left: 0;
-    width: 100%;
-    background: rgba(255,255,255,0.95);
-    border-bottom: 1px solid #ccc;
+    bottom: 15px;
+    right: 15px;
+    background: var(--card-bg);
     padding: 10px;
-    text-align: center;
-    transition: top 0.3s ease;
-    z-index: 999;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    box-shadow: var(--shadow-md);
+    max-width: 220px;
+    backdrop-filter: blur(5px);
+    transition: var(--transition);
   }
 
-  #top-panel button {
-    margin: 0 5px;
-    padding: 5px 8px;
+  #legend:hover {
+    box-shadow: var(--shadow-lg);
   }
 
-  body:hover #top-panel {
-    top: 0;
+  #legend strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 3px 0;
+  }
+
+  .legend-color {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    #main-toolbar {
+      top: 10px;
+      left: 10px;
+      width: calc(100% - 20px);
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .toolbar-card {
+      width: calc(50% - 10px);
+      padding: 12px;
+    }
+
+    #action-bar {
+      top: 140px;
+      left: 10px;
+      right: 10px;
+      padding: 10px;
+    }
+    #legend {
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      max-width: none;
+    }
+  }
+  /* 加载动画 */
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+
+  .loading {
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  /* 工具提示 */
+  .tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 300px;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
 </style>
 </head>
 
 <body>
-  <!-- 常驻左侧工具栏 -->
-  <div id="search-bar">
-    <input type="text" id="searchInput" placeholder="请输入关键词" style="width:200px;" />
-    <button onclick="handleSearch()">查询节点</button>
-    <br />
-    <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
-    <button onclick="handleUpload()">上传图谱数据</button>
-    <label for="graphSelect">选择图谱：</label>
-<select id="graphSelect"></select>
-<button onclick="loadSelectedGraph()">加载图谱</button>
+  <!-- 主工具栏 -->
+  <div id="main-toolbar">
+    <div class="toolbar-card">
+      <div class="toolbar-section">
+        <div class="section-title">
+          <i class="fas fa-search"></i>
+          <span>节点查询</span>
+        </div>
+        <input type="text" id="searchInput" placeholder="输入关键词搜索..." />
+        <button onclick="handleSearch()" class="success">
+          <i class="fas fa-search"></i>
+          <span>查询节点</span>
+        </button>
+        <button onclick="cancelFocus()" class="secondary" style="margin-top: 12px;">
+          <i class="fas fa-times-circle"></i>
+          <span>取消聚焦</span>
+        </button>
+      </div>
 
+      <div class="toolbar-section">
+        <div class="section-title">
+          <i class="fas fa-file-import"></i>
+          <span>数据上传</span>
+        </div>
+        <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
+        <button onclick="handleUpload()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>上传图谱数据</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-card">
+       <div class="toolbar-section">
+        <div class="section-title">
+          <i class="fas fa-network-wired"></i>
+          <span>图谱管理</span>
+        </div>
+        <select id="graphSelect">
+          <option value="">选择要加载的图谱</option>
+        </select>
+        <button onclick="loadSelectedGraph()">
+          <i class="fas fa-sync"></i>
+          <span>加载图谱</span>
+        </button>
+      </div>
+
+      <div class="toolbar-section">
+        <button class="danger" onclick="handleDeleteAll()">
+          <i class="fas fa-trash-alt"></i>
+          <span>删除全部图谱</span>
+        </button>
+        <button class="danger" onclick="handleDeleteGraph()">
+          <i class="fas fa-trash"></i>
+          <span>删除当前图谱</span>
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- 悬浮顶栏：鼠标移上去显示 -->
-  <div id="top-panel">
-    <button onclick="focusNode()">聚焦实体</button>
-    <button onclick="cancelFocus()">取消聚焦</button>
-    <button onclick="exportPNG()">导出 PNG</button>
-    <button onclick="exportJSON()">导出 JSON</button>
-    <button onclick="handleDeleteAll()">删除全部图谱</button>
-    <button onclick="handleDeleteGraph()">删除子图图谱</button>
+
+ <!-- 导出下拉菜单 -->
+  <div class="export-dropdown">
+    <button class="export-btn" onclick="toggleExportMenu()">
+      <i class="fas fa-download"></i>
+      <span>导出数据</span>
+      <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="export-options" id="exportOptions">
+      <button onclick="exportPNG()">
+        <i class="fas fa-image"></i>
+        <span>导出PNG图片</span>
+      </button>
+      <button onclick="exportJSON()">
+        <i class="fas fa-file-code"></i>
+        <span>导出JSON数据</span>
+      </button>
+      <button onclick="exportSVG()">
+        <i class="fas fa-file-image"></i>
+        <span>导出SVG矢量图</span>
+      </button>
+    </div>
   </div>
 
-  <!-- SVG 图谱 -->
+   <!-- SVG 图谱 -->
   <svg></svg>
 
   <!-- 图例 -->
   <div id="legend">
-    <strong>实体类型图例</strong>
-    <div>
-      <span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>
-      Person
+    <strong><i class="fas fa-map-marked-alt"></i> 实体类型图例</strong>
+    <div class="legend-item">
+      <span class="legend-color" style="background:#4361ee;"></span>
+      Person (人物)
     </div>
-    <div>
-      <span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>
-      Organization
+    <div class="legend-item">
+      <span class="legend-color" style="background:#f72585;"></span>
+      Organization (组织)
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background:#4cc9f0;"></span>
+      Location (地点)
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background:#7209b7;"></span>
+      Event (事件)
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background:#4895ef;"></span>
+      Concept (概念)
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background:#f8961e;"></span>
+      Date (日期)
     </div>
   </div>
 
+  <!-- 工具提示 -->
+  <div class="tooltip" id="tooltip"></div>
+
   <script type="module" src="./js/graph.js"></script>
+ <script>
+    // 导出菜单切换函数
+    function toggleExportMenu() {
+      const exportOptions = document.getElementById('exportOptions');
+      exportOptions.classList.toggle('show');
+
+      // 点击页面其他地方关闭菜单
+      document.addEventListener('click', function closeMenu(e) {
+        if (!e.target.closest('.export-dropdown')) {
+          exportOptions.classList.remove('show');
+          document.removeEventListener('click', closeMenu);
+        }
+      });
+    }
+
+    // 导出函数
+    function exportPNG() {
+      console.log('导出PNG功能');
+      document.getElementById('exportOptions').classList.remove('show');
+      showTooltip('正在导出PNG图片...', 1500);
+    }
+
+    function exportJSON() {
+      console.log('导出JSON功能');
+      document.getElementById('exportOptions').classList.remove('show');
+      showTooltip('正在导出JSON数据...', 1500);
+    }
+
+    function exportSVG() {
+      console.log('导出SVG功能');
+      document.getElementById('exportOptions').classList.remove('show');
+      showTooltip('正在导出SVG矢量图...', 1500);
+    }
+
+    // 工具提示函数
+    function showTooltip(message, duration) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.textContent = message;
+      tooltip.style.opacity = '1';
+
+      setTimeout(() => {
+        tooltip.style.opacity = '0';
+      }, duration);
+    }
+
+    // 示例函数
+    function focusNode() {
+      showTooltip('聚焦到选定节点', 1000);
+    }
+
+    function expandGraph() {
+      showTooltip('正在展开图谱视图', 1000);
+    }
+
+    function zoomToFit() {
+      showTooltip('调整视图以适应画布', 1000);
+    }
+
+    function resetView() {
+      showTooltip('重置视图到初始状态', 1000);
+    }
+
+    // 初始化工具提示位置
+    document.addEventListener('mousemove', (e) => {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.style.left = `${e.pageX + 10}px`;
+      tooltip.style.top = `${e.pageY + 10}px`;
+    });
+  </script>
 </body>
 </html>
