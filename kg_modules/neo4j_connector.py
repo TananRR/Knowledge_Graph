@@ -7,6 +7,7 @@ PASSWORD = "testpassword"  # 替换为你的实际密码
 
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
+
 def run_cypher(query, parameters=None):
     with driver.session() as session:
         result = session.run(query, parameters)

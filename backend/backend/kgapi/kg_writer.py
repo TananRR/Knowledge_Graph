@@ -5,7 +5,7 @@ import re
 # 连接 Neo4j
 driver = GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "testpassword"))
 import time
-import networkx as nx
+
 # 配置 Neo4j 数据库连接
 # driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
 
@@ -101,7 +101,7 @@ def query_graph(session, graph_id):
         r = dict(record["r"])
         # 打印检查
         print(f"({a}) -[{r}]-> ({b})")
-        
+
         # 用id或name作为唯一标识（根据你Neo4j的数据建模）
         a_id = a.get("id") or a.get("name")
         b_id = b.get("id") or b.get("name")
@@ -134,6 +134,8 @@ def list_user_graphs(session, user_id):
     for gid in graph_ids:
         print(f" - {gid}")
     return graph_ids
+
+
 # 查询某个用户的所有图谱（完整结构）
 def query_graphs_by_user(session, user_id):
     print(f"\n📌 查询用户 {user_id} 的所有图谱结构（实体 + 关系）：")
@@ -173,7 +175,6 @@ def query_graphs_by_user(session, user_id):
         })
 
     return all_graphs
-
 
 
 # 查询所有图谱
@@ -254,11 +255,32 @@ def search_entities_by_keyword(session, user_id, keyword):
     return entities
 
 
+def create_graph(entities, relations, graph_id, user_id):
+    with driver.session() as session:
+        create_entities(session, entities, graph_id, user_id)
+        create_relations(session, relations, entities, graph_id, user_id)
+
+
+def search_entities(user_id, keyword):
+    with driver.session() as session:
+        return search_entities_by_keyword(session, user_id, keyword)
+
+
+def get_graph_data(graph_id):
+    with driver.session() as session:
+        return query_graph(session, graph_id)
+
+
+def delete_graph(graph_id):
+    with driver.session() as session:
+        clear_graph_by_id(session, graph_id)
+
+
 # 主函数
 def main():
     user_id = "user_001"  # 模拟当前登录用户
-    file_path = "D:/A-trainingStore/Knowledge_Graph/extracted_result.json"
-    
+    file_path = "D:/pyc/task/Knowledge_Graph/backend/kgapi/extracted_result.json"
+
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
 
@@ -273,7 +295,6 @@ def main():
         query_graph(session, graph_id)
         list_user_graphs(session, user_id)
         search_entities_by_keyword(session, user_id, "中国")
-      
 
         # 可选功能：
         # clear_all_graphs(session)

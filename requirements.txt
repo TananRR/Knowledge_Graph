@@ -1,5 +1,5 @@
 Django>=4.2
-spacy>=3.0
+spacy>=3.0.0
 jieba
 py2neo>=2021
 pandas
