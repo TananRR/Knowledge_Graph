@@ -1,28 +1,24 @@
-import json
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from docx import Document
 import fitz  # PyMuPDF
 import pdfplumber
+from .extractor import extract_knowledge  # 🔗 加入这一行
+from .kg_writer import create_graph
+import time
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def extract_text_from_file(request):
-    """
-    接收文件并提取纯文本
-    """
     try:
-        # 获取上传的文件
         file = request.FILES.get("file")
         if not file:
             return JsonResponse({"error": "No file provided"}, status=400)
 
-        # 根据文件扩展名处理文件
         file_extension = file.name.split(".")[-1].lower()
         text = ""
-
         if file_extension == "txt":
             text = file.read().decode("utf-8")
         elif file_extension == "pdf":
@@ -32,12 +28,26 @@ def extract_text_from_file(request):
         else:
             return JsonResponse({"error": "Unsupported file format"}, status=400)
 
-        # 返回提取的文本
-        return JsonResponse({"text": text}, status=200)
+        # 抽取实体与关系
+        kg_result = extract_knowledge(text)
+
+        entities = kg_result["entities"]
+        relations = kg_result["relations"]
+
+        graph_id = time.strftime("graph_%Y%m%d%H%M%S")
+        user_id = request.POST.get("user_id", "default_user")
+
+        create_graph(entities, relations, graph_id, user_id)
+        return JsonResponse({
+            "text": text,
+            "entities": kg_result["entities"],
+            "relations": kg_result["relations"],
+            "message": "构建成功",
+            "graph_id": graph_id
+        }, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
 
 def extract_text_from_pdf(file):
     """
