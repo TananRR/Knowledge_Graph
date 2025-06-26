@@ -6,6 +6,7 @@ from .extract import extract_text_from_file
 from .delete import delete_all_graphs, delete_graph_by_id, delete_graphs_by_user
 from .query import get_graph_by_id, get_user_graph_ids, get_graphs_by_user, get_all_graphs
 
+
 urlpatterns = [
     path('search/', search_entity),  # 确保这个路径存在
     path('export/', export_knowledge_graph),
@@ -17,4 +18,5 @@ urlpatterns = [
     path('query/user/graph_ids/', get_user_graph_ids, ),
     path('query/user/graphs/', get_graphs_by_user),
     path('query/all/graphs/', get_all_graphs),
+
 ]
