@@ -98,7 +98,7 @@ def query_graph(session, graph_id):
         r = dict(record["r"])
         # 打印检查
         print(f"({a}) -[{r}]-> ({b})")
-
+        
         # 用id或name作为唯一标识（根据你Neo4j的数据建模）
         a_id = a.get("id") or a.get("name")
         b_id = b.get("id") or b.get("name")
@@ -131,8 +131,6 @@ def list_user_graphs(session, user_id):
     for gid in graph_ids:
         print(f" - {gid}")
     return graph_ids
-
-
 # 查询某个用户的所有图谱（完整结构）
 def query_graphs_by_user(session, user_id):
     print(f"\n📌 查询用户 {user_id} 的所有图谱结构（实体 + 关系）：")
@@ -174,6 +172,7 @@ def query_graphs_by_user(session, user_id):
     return all_graphs
 
 
+
 # 查询所有图谱
 def query_all_graphs(session):
     print("📌 查询所有图谱的结构（实体 + 关系）：")
@@ -208,6 +207,82 @@ def query_all_graphs(session):
         })
 
     return all_graphs
+
+
+# kg_writer.py 新增函数
+
+def query_subgraph(session, graph_id=None, user_id=None, keyword=None):
+    """
+    通用子图查询函数
+    参数：
+    - graph_id: 查询指定图谱
+    - user_id: 查询用户的所有图谱
+    - keyword: 关键词搜索
+    """
+    if graph_id:
+        return query_graph(session, graph_id)
+    elif user_id:
+        return query_graphs_by_user(session, user_id)
+    elif keyword:
+        # 关键词搜索增强版（返回子图而非单个节点）
+        result = session.run(
+            """
+            MATCH path = (start)-[*0..2]-(related)
+            WHERE any(
+                prop IN keys(start) WHERE 
+                toLower(toString(start[prop])) CONTAINS toLower($keyword)
+            )
+            UNWIND nodes(path) AS n
+            UNWIND relationships(path) AS r
+            RETURN 
+                collect(DISTINCT n) AS nodes,
+                collect(DISTINCT r) AS relationships
+            """,
+            keyword=keyword
+        )
+        record = result.single()
+        return convert_to_graph_structure(record)
+    else:
+        return query_all_graphs(session)
+
+
+def convert_to_graph_structure(record):
+    """通用结果转换函数"""
+    if not record:
+        return {"nodes": [], "links": []}
+
+    nodes = []
+    links = []
+    node_ids = set()
+
+    # 处理节点
+    for node in record.get("nodes", []):
+        node_id = node.id
+        if node_id not in node_ids:
+            nodes.append({
+                "id": node_id,
+                "labels": list(node.labels),
+                "properties": dict(node)
+            })
+            node_ids.add(node_id)
+
+    # 处理关系
+    for rel in record.get("relationships", []):
+        links.append({
+            "source": rel.start_node.id,
+            "target": rel.end_node.id,
+            "type": rel.type,
+            "properties": dict(rel)
+        })
+
+    return {
+        "nodes": nodes,
+        "links": links
+    }
+
+
+
+
 
 
 # 删除所有图谱
@@ -292,6 +367,7 @@ def main():
         query_graph(session, graph_id)
         list_user_graphs(session, user_id)
         search_entities_by_keyword(session, user_id, "中国")
+      
 
         # 可选功能：
         # clear_all_graphs(session)
