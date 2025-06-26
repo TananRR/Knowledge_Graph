@@ -14,7 +14,7 @@ urlpatterns = [
     path('delete/graph/', delete_graph_by_id),
     path('delete/user/', delete_graphs_by_user),
     path('query/graph/', get_graph_by_id),
-    path('query/user/graph_ids/', get_user_graph_ids, ),
+    path('query/user/graph_ids/', get_user_graph_ids ),
     path('query/user/graphs/', get_graphs_by_user),
     path('query/all/graphs/', get_all_graphs),
 ]
