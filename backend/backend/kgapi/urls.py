@@ -1,7 +1,17 @@
 # kgapi/urls.py
+
 from django.urls import path
-from .views import search_entity  # 确保这是正确的导入
+from . import views
+from .delete import delete_all_graphs, delete_graph_by_id, delete_graphs_by_user
+from .extract import extract_text_from_file
+
 
 urlpatterns = [
-    path('search/', search_entity),  # 确保这个路径存在
+    path("upload/",extract_text_from_file),
+    path("graph/<str:graph_id>", views.get_graph),
+    path("search/", views.search_entity),
+    path("export/<str:graph_id>", views.export_graph),
+    path('delete/all/', delete_all_graphs),
+    path('delete/graph/', delete_graph_by_id),
+    path('delete/user/', delete_graphs_by_user),
 ]

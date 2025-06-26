@@ -1,104 +1,15 @@
 {
   "entities": [
-    {
-      "id": "e1",
-      "name": "2023年6月15日",
-      "type": "DATE",
-      "start": 1,
-      "end": 4
-    },
-    {
-      "id": "e2",
-      "name": "北京",
-      "type": "Location",
-      "start": 5,
-      "end": 6
-    },
-    {
-      "id": "e3",
-      "name": "上海",
-      "type": "Location",
-      "start": 15,
-      "end": 16
-    },
-    {
-      "id": "e4",
-      "name": "2024年3月",
-      "type": "DATE",
-      "start": 61,
-      "end": 63
-    },
-    {
-      "id": "e5",
-      "name": "首席执行官",
-      "type": "Title",
-      "start": 69,
-      "end": 71
-    },
-    {
-      "id": "e6",
-      "name": "李明",
-      "type": "Person",
-      "start": 71,
-      "end": 72
-    },
-    {
-      "id": "e7",
-      "name": "王建国",
-      "type": "Person",
-      "start": 97,
-      "end": 98
-    },
-    {
-      "id": "e8",
-      "name": "5亿元人民币",
-      "type": "MONEY",
-      "start": 106,
-      "end": 109
-    },
-    {
-      "id": "e9",
-      "name": "深圳",
-      "type": "Location",
-      "start": 111,
-      "end": 112
-    },
-    {
-      "id": "e10",
-      "name": "张教授",
-      "type": "Person",
-      "start": 133,
-      "end": 135
-    },
-    {
-      "id": "e11",
-      "name": "中国",
-      "type": "Location",
-      "start": 162,
-      "end": 163
-    }
+    { "id": "P1", "name": "马化腾", "type": "Person" },
+    { "id": "P2", "name": "张小龙", "type": "Person" },
+    { "id": "O1", "name": "腾讯", "type": "Organization" },
+    { "id": "O2", "name": "微信事业群", "type": "Organization" },
+    { "id": "O3", "name": "阿里巴巴", "type": "Organization" }
   ],
   "relations": [
-    {
-      "source": "e1",
-      "target": "e3",
-      "type": "co-occurrence",
-      "verb": "同现",
-      "similarity": 0.18
-    },
-    {
-      "source": "e5",
-      "target": "e6",
-      "type": "co-occurrence",
-      "verb": "同现",
-      "similarity": 0.63
-    },
-    {
-      "source": "e8",
-      "target": "e9",
-      "type": "co-occurrence",
-      "verb": "同现",
-      "similarity": 0.23
-    }
+    { "source": "P1", "target": "O1", "type": "创始人" },
+    { "source": "P2", "target": "O2", "type": "负责人" },
+    { "source": "O2", "target": "O1", "type": "子公司" },
+    { "source": "O1", "target": "O3", "type": "竞争对手" }
   ]
 }

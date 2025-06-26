@@ -27,9 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-NEO4J_URL = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "testpassword"
+
 
 # Application definition
 
@@ -42,6 +40,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "backend.kgapi",
+    'corsheaders',    #新增
+
 ]
 
 MIDDLEWARE = [
@@ -52,6 +52,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',  # 新增
+    'django.middleware.common.CommonMiddleware', #新增
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -125,3 +127,27 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Neo4j数据库配置
+NEO4J_URI = "bolt://neo4j:7687"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "testpassword"
+
+
+
+# 3. 允许跨域的源（根据实际需求调整）
+#    开发阶段可直接允许所有源（生产环境需严格限制）
+CORS_ALLOW_ALL_ORIGINS = True  # 简单但不安全，适合开发
+# 或更严格的配置（推荐）：
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost",  # 前端运行的地址（不带端口，因为 Nginx 用 80 端口）
+# ]
+
+# 4. 允许跨域的请求方法和头（可选，默认已包含常用方法）
+CORS_ALLOW_METHODS = [
+    'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'
+]
+CORS_ALLOW_HEADERS = [
+    'accept', 'accept-encoding', 'authorization', 'content-type',
+    'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
+]
