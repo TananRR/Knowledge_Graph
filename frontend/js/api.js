@@ -92,7 +92,7 @@ export async function deleteGraphsByUser(userId) {
 export async function downloadGraphJSON(graphId) {
   if (!graphId) throw new Error("缺少 graphId");
 
-  const resp = await fetch(`${BASE_URL}/export/${graphId}`);
+  const resp = await fetch(`${BASE_URL}/export/?graph_id=${encodeURIComponent(graphId)}`);
   const json = await handleResponse(resp);
 
   const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });

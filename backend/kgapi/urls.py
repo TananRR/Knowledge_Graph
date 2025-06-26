@@ -8,7 +8,7 @@ from .query import get_graph_by_id, get_user_graph_ids, get_graphs_by_user, get_
 
 urlpatterns = [
     path('search/', search_entity),  # 确保这个路径存在
-    path('upload/', export_knowledge_graph),
+    path('export/', export_knowledge_graph),
     path('extract/', extract_text_from_file),
     path('delete/all/', delete_all_graphs),
     path('delete/graph/', delete_graph_by_id),
