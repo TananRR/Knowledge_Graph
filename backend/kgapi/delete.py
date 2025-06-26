@@ -24,6 +24,7 @@ def delete_all_graphs(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_graph_by_id(request):
