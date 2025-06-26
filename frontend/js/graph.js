@@ -1,5 +1,5 @@
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON
-,deleteAllGraphs,deleteGraphById,deleteGraphsByUser} from './api.js';
+,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -487,15 +487,12 @@ window.exportJSON = async function() {
 };
 
 // 页面加载时调用
-window.onload = async function() {
+window.onload = async function () {
   try {
-    // 如果有默认图谱id，可赋值给currentGraphId
-    if (!currentGraphId) {
-      alert("请先上传数据以加载图谱");
-      return;
-    }
-    const graphData = await fetchGraphData(currentGraphId);
-    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+    const data = await fetchUserGraphIds("default_user");
+    const graphIds = data.graph_ids || [];
+
+    if (!graphIds.length) {
       d3.select("svg").selectAll("*").remove();
       d3.select("svg").append("text")
         .attr("x", window.innerWidth / 2)
@@ -504,13 +501,43 @@ window.onload = async function() {
         .attr("font-size", "20px")
         .attr("fill", "#666")
         .text("图谱中没有数据，请先上传数据");
-      document.querySelector("button[onclick='focusNode()']").disabled = true;
-      document.querySelector("button[onclick='handleSearch()']").disabled = true;
-    } else {
-      renderGraph(graphData);
+      return;
     }
+
+    // ✅ 动态填充下拉框
+    const select = document.getElementById("graphSelect");
+    graphIds.forEach(id => {
+      const option = document.createElement("option");
+      option.value = id;
+      option.text = id;
+      select.appendChild(option);
+    });
+
+    // 默认选中最后一个并加载
+    select.value = graphIds[graphIds.length - 1];
+    currentGraphId = select.value;
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
+
   } catch (err) {
     alert("图谱数据加载失败！");
     console.error(err);
   }
 };
+
+// 用户手动选择后点击加载
+window.loadSelectedGraph = async function () {
+  const select = document.getElementById("graphSelect");
+  const selectedId = select.value;
+  if (!selectedId) return;
+
+  try {
+    currentGraphId = selectedId;
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
+  } catch (err) {
+    alert("图谱加载失败！");
+    console.error(err);
+  }
+};
+
