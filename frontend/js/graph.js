@@ -1,4 +1,5 @@
-import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON ,deleteAllGraph,deleteGraphById,deleteGraphByUser} from './api.js';
+import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON
+,deleteAllGraphs,deleteGraphById,deleteGraphsByUser} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -40,21 +41,22 @@ export function renderGraph(graphData) {
     .attr("fill", "#aaa");
 
   // 验证数据
-  if (!graphData || !graphData.entities || !graphData.relations) {
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", height / 2)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#f00")
-      .text("错误：无效的图谱数据");
-    return;
-  }
+if (!graphData || !graphData.nodes || !graphData.links) {
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", height / 2)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#f00")
+    .text("错误：无效的图谱数据");
+  return;
+}
+
 
   currentData = graphData;
 
   // 创建力导向图模拟
-  const simulation = d3.forceSimulation(graphData.entities)
-    .force("link", d3.forceLink(graphData.relations)
+  const simulation = d3.forceSimulation(graphData.nodes)
+    .force("link", d3.forceLink(graphData.links)
       .id(d => d.id)
       .distance(150)
       .strength(0.8))
@@ -68,7 +70,7 @@ export function renderGraph(graphData) {
   // 画关系线
   const link = container.append("g")
     .selectAll("line")
-    .data(graphData.relations)
+    .data(graphData.links)
     .enter()
     .append("line")
     .attr("stroke", "#aaa")
@@ -80,7 +82,7 @@ export function renderGraph(graphData) {
   // 关系文本标签
   const linkLabel = container.append("g")
     .selectAll("text")
-    .data(graphData.relations)
+    .data(graphData.links)
     .enter()
     .append("text")
     .text(d => d.type)
@@ -90,7 +92,7 @@ export function renderGraph(graphData) {
   // 画节点圆圈
   const node = container.append("g")
     .selectAll("circle")
-    .data(graphData.entities)
+    .data(graphData.nodes)
     .enter()
     .append("circle")
     .attr("r", d => d.type === "Person" ? 20 : 15) // 人节点稍大
@@ -112,7 +114,7 @@ export function renderGraph(graphData) {
   // 节点文字标签
   const label = container.append("g")
     .selectAll("text")
-    .data(graphData.entities)
+    .data(graphData.nodes)
     .enter()
     .append("text")
     .text(d => d.name)
@@ -149,7 +151,7 @@ export function renderGraph(graphData) {
   node
     .on("mouseover", function(event, d) {
       node.attr("opacity", o =>
-        o.id === d.id || graphData.relations.some(rel =>
+        o.id === d.id || graphData.links.some(rel =>
           (rel.source.id === d.id && rel.target.id === o.id) ||
           (rel.target.id === d.id && rel.source.id === o.id)
         ) ? 1 : 0.2
@@ -186,7 +188,7 @@ export function focusNode() {
   const keyword = document.getElementById("searchInput").value.trim();
   if (!keyword || !currentData || !simulationRef || !nodeRef || !linkRef) return;
 
-  const match = currentData.entities.find(n => n.name.includes(keyword));
+  const match = currentData.nodes.find(n => n.name.includes(keyword));
   if (!match) {
     alert("未找到实体：" + keyword);
     return;
@@ -205,7 +207,7 @@ export function focusNode() {
 
   // 暂停模拟并清除所有固定位置
   simulation.stop();
-  currentData.entities.forEach(node => {
+  currentData.nodes.forEach(node => {
     node.fx = null;
     node.fy = null;
   });
@@ -215,7 +217,7 @@ export function focusNode() {
   match.fy = height / 2;
 
   // 获取邻居节点并确保有有效坐标
-  const neighbors = currentData.relations
+  const neighbors = currentData.links
     .filter(rel => rel.source.id === match.id || rel.target.id === match.id)
     .map(rel => (rel.source.id === match.id ? rel.target : rel.source))
     .map(node => {
@@ -235,7 +237,7 @@ export function focusNode() {
 
   // 重新初始化力导向图
   simulation
-    .force("link", d3.forceLink(currentData.relations).id(d => d.id).distance(150))
+    .force("link", d3.forceLink(currentData.links).id(d => d.id).distance(150))
     .alpha(1)
     .restart();
 
@@ -298,8 +300,8 @@ export function cancelFocus() {
     .attr("stroke-width", 1.5);
 
   // 重置高亮标记
-  if (currentData.entities) {
-    currentData.entities.forEach(entity => {
+  if (currentData.nodes) {
+    currentData.nodes.forEach(entity => {
       entity.highlight = false;
     });
   }
@@ -386,7 +388,7 @@ window.handleDeleteAll = async function () {
   if (!confirm("确定删除所有图谱吗？此操作不可恢复！")) return;
 
   try {
-    const result = await deleteAllGraph(); // 调用接口
+    const result = await deleteAllGraphs(); // 调用接口
     alert(result.message || "所有图谱删除成功");
     d3.select("svg").selectAll("*").remove();
     currentData = null;
@@ -422,7 +424,7 @@ window.handleDeleteByUser = async function () {
   if (!confirm(`确定删除用户 ${userId} 的所有图谱吗？`)) return;
 
   try {
-    const result = await deleteGraphByUser(userId);
+    const result = await deleteGraphsByUser(userId);
     alert(result.message || "用户图谱删除成功");
     d3.select("svg").selectAll("*").remove();
     currentData = null;
@@ -450,8 +452,8 @@ window.handleSearch = async function () {
 
     // 高亮匹配的节点，而不是添加新节点
     const matchedIds = results.map(d => d.id);
-    if (currentData && currentData.entities) {
-      currentData.entities.forEach(entity => {
+    if (currentData && currentData.nodes) {
+      currentData.nodes.forEach(entity => {
         entity.highlight = matchedIds.includes(entity.id);
       });
 
@@ -493,7 +495,7 @@ window.onload = async function() {
       return;
     }
     const graphData = await fetchGraphData(currentGraphId);
-    if (!graphData || !graphData.entities || graphData.entities.length === 0) {
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
       d3.select("svg").selectAll("*").remove();
       d3.select("svg").append("text")
         .attr("x", window.innerWidth / 2)
