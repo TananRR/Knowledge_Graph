@@ -1,5 +1,6 @@
 import json
 from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from neo4j import GraphDatabase
 from .kg_writer import clear_all_graphs, clear_graph_by_id, clear_graphs_by_user
@@ -13,6 +14,7 @@ NEO4J_PASSWORD = "testpassword"
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 
+@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_all_graphs(request):
     try:
@@ -23,6 +25,7 @@ def delete_all_graphs(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_graph_by_id(request):
     try:
@@ -37,6 +40,7 @@ def delete_graph_by_id(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@csrf_exempt
 @require_http_methods(["DELETE"])
 def delete_graphs_by_user(request):
     try:
