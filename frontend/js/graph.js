@@ -1,5 +1,6 @@
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON } from './api.js';
 
+let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
 let simulationRef = null;
 let nodeRef = null;
@@ -362,22 +363,24 @@ window.handleUpload = async function () {
 
   try {
     const result = await uploadTextFile(file);
-    if (result.code === 0) {
+    if (result.graph_id) {
       alert("上传并更新成功！");
-
-      // 重新启用按钮
+      currentGraphId = result.graph_id;  // 保存 graph_id
+      // 启用按钮
       document.querySelector("button[onclick='focusNode()']").disabled = false;
       document.querySelector("button[onclick='handleSearch()']").disabled = false;
-
-      await loadGraph();
+      // 重新加载图谱数据，基于当前 graph_id
+      const graphData = await fetchGraphData(currentGraphId);
+      renderGraph(graphData);
     } else {
-      alert("上传失败：" + result.msg);
+      alert("上传失败：" + (result.msg || "未知错误"));
     }
   } catch (err) {
     alert("请求失败，请检查后端服务");
     console.error(err);
   }
 };
+
 
 window.handleSearch = async function () {
   const keyword = document.getElementById("searchInput").value.trim();
@@ -416,14 +419,29 @@ window.handleSearch = async function () {
   }
 };
 
-window.exportJSON = downloadGraphJSON;
+window.exportJSON = async function() {
+  if (!currentGraphId) {
+    alert("没有可导出的图谱");
+    return;
+  }
+  try {
+    await downloadGraphJSON(currentGraphId);
+  } catch (e) {
+    alert("导出失败");
+    console.error(e);
+  }
+};
+
 // 页面加载时调用
 window.onload = async function() {
   try {
-    const graphData = await fetchGraphData();
-
+    // 如果有默认图谱id，可赋值给currentGraphId
+    if (!currentGraphId) {
+      alert("请先上传数据以加载图谱");
+      return;
+    }
+    const graphData = await fetchGraphData(currentGraphId);
     if (!graphData || !graphData.entities || graphData.entities.length === 0) {
-      // 清空SVG并显示提示
       d3.select("svg").selectAll("*").remove();
       d3.select("svg").append("text")
         .attr("x", window.innerWidth / 2)
@@ -432,8 +450,6 @@ window.onload = async function() {
         .attr("font-size", "20px")
         .attr("fill", "#666")
         .text("图谱中没有数据，请先上传数据");
-
-      // 禁用搜索和聚焦按钮
       document.querySelector("button[onclick='focusNode()']").disabled = true;
       document.querySelector("button[onclick='handleSearch()']").disabled = true;
     } else {
