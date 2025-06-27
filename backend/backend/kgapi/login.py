@@ -4,6 +4,8 @@ import json
 
 from kg_modules.neo4j_connector import run_cypher
 
+import hashlib
+
 @csrf_exempt
 def login(request):
     if request.method != "POST":
@@ -27,16 +29,20 @@ def login(request):
     if not user_id or not password:
         return JsonResponse({"error": "用户名和密码不能为空"}, status=400)
 
+    # 对密码进行哈希处理，避免明文存储和传递
+    # 这里假设注册时也采用相同的哈希方式
+    password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
     # 使用kg_modules中的run_cypher进行Neo4j查询
-    cypher = "MATCH (u:User {id: $user_id, password: $password}) RETURN u"
-    params = {"user_id": user_id, "password": password}
+    cypher = "MATCH (u:User {id: $user_id, password: $password_hash}) RETURN u"
+    params = {"user_id": user_id, "password_hash": password_hash}
     result = run_cypher(cypher, params)
     if result and len(result) > 0:
         return JsonResponse({"message": "登录成功", "user_id": user_id})
     else:
         return JsonResponse({"error": "用户名或密码错误"}, status=401)
 
-        # 注册用户接口
+# 修改注册用户接口，使密码也进行哈希处理
 @csrf_exempt
 def register(request):
     if request.method != "POST":
@@ -63,13 +69,18 @@ def register(request):
     if result and len(result) > 0:
         return JsonResponse({"error": "用户已存在"}, status=409)
 
-    # 创建新用户
+    # 对密码进行哈希处理
+    password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+    # 创建新用户，存储哈希后的密码
     cypher_create = "CREATE (u:User {id: $user_id, password: $password}) RETURN u"
-    params_create = {"user_id": user_id, "password": password}
+    params_create = {"user_id": user_id, "password": password_hash}
     run_cypher(cypher_create, params_create)
     return JsonResponse({"message": "注册成功", "user_id": user_id})
 
-# 删除用户接口
+
+
+# 删除用户接口，密码进行哈希处理
 @csrf_exempt
 def delete_user(request):
     if request.method != "POST":
@@ -89,9 +100,12 @@ def delete_user(request):
     if not user_id or not password:
         return JsonResponse({"error": "用户名和密码不能为空"}, status=400)
 
-    # 验证用户身份
+    # 对密码进行哈希处理
+    password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+    # 验证用户身份（使用哈希后的密码）
     cypher_check = "MATCH (u:User {id: $user_id, password: $password}) RETURN u"
-    params_check = {"user_id": user_id, "password": password}
+    params_check = {"user_id": user_id, "password": password_hash}
     result = run_cypher(cypher_check, params_check)
     if not result or len(result) == 0:
         return JsonResponse({"error": "用户名或密码错误"}, status=401)
@@ -102,7 +116,8 @@ def delete_user(request):
     run_cypher(cypher_delete, params_delete)
     return JsonResponse({"message": "用户已删除", "user_id": user_id})
 
-# 修改密码接口
+
+# 修改密码接口（对密码进行哈希处理）
 @csrf_exempt
 def change_password(request):
     if request.method != "POST":
@@ -124,15 +139,21 @@ def change_password(request):
     if not user_id or not old_password or not new_password:
         return JsonResponse({"error": "用户名、原密码和新密码不能为空"}, status=400)
 
-    # 验证原密码
+    # 对原密码和新密码进行哈希处理
+    old_password_hash = hashlib.sha256(old_password.encode('utf-8')).hexdigest()
+    new_password_hash = hashlib.sha256(new_password.encode('utf-8')).hexdigest()
+
+    # 验证原密码（哈希后）
     cypher_check = "MATCH (u:User {id: $user_id, password: $old_password}) RETURN u"
-    params_check = {"user_id": user_id, "old_password": old_password}
+    params_check = {"user_id": user_id, "old_password": old_password_hash}
     result = run_cypher(cypher_check, params_check)
     if not result or len(result) == 0:
         return JsonResponse({"error": "用户名或原密码错误"}, status=401)
 
-    # 更新密码
+    # 更新密码（哈希后）
     cypher_update = "MATCH (u:User {id: $user_id}) SET u.password = $new_password RETURN u"
-    params_update = {"user_id": user_id, "new_password": new_password}
+    params_update = {"user_id": user_id, "new_password": new_password_hash}
     run_cypher(cypher_update, params_update)
     return JsonResponse({"message": "密码修改成功", "user_id": user_id})
+
+
