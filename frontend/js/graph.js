@@ -375,43 +375,113 @@ export function focusNode() {
 //    .call(zoomBehavior.transform, d3.zoomIdentity);
 //}
 
-export async function exportPNG() {
-  const svgElement = document.querySelector("svg");
-  const serializer = new XMLSerializer();
-  let svgString = serializer.serializeToString(svgElement);
+/**
+ * 将当前知识图谱导出为PNG图片
+ * @param {number} [scale=2] - 导出缩放因子，提高可提高清晰度
+ * @param {string} [bgColor='white'] - 背景颜色
+ */
+export async function exportPNG(scale = 2, bgColor = 'white') {
+  try {
+    // 获取并克隆SVG元素
+    const svgElement = document.querySelector("svg");
+    const clonedSvg = svgElement.cloneNode(true);
 
-  const svgGroup = svgElement.querySelector("g");
-  const bbox = svgGroup.getBBox();
+    // 序列化SVG
+    const serializer = new XMLSerializer();
+    let svgString = serializer.serializeToString(clonedSvg);
 
-  const padding = 50;
-  const width = (bbox.width + padding * 2);
-  const height = (bbox.height + padding * 2);
+    // 计算边界和尺寸
+    const svgGroup = clonedSvg.querySelector("g");
+    const bbox = svgGroup.getBBox();
+    const padding = 50;
+    const width = Math.ceil(bbox.width + padding * 2);
+    const height = Math.ceil(bbox.height + padding * 2);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = width * 2;    // 高清
-  canvas.height = height * 2;
-  const ctx = canvas.getContext("2d");
+    // 创建画布
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 绘制背景
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const translatedSvgString = svgString.replace(
-    '<g>',
-    `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
-  );
+    // 调整SVG位置
+    const translatedSvgString = svgString.replace(
+      '<g>',
+      `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
+    );
 
-  const v = await canvg.Canvg.fromString(ctx, translatedSvgString, {
-    ignoreDimensions: true,
-    ignoreClear: true,
-    scaleWidth: canvas.width,
-    scaleHeight: canvas.height
-  });
-  await v.render();
+    // 渲染SVG到画布
+    const v = await canvg.Canvg.fromString(ctx, translatedSvgString, {
+      ignoreDimensions: true,
+      ignoreClear: true,
+      scaleWidth: canvas.width,
+      scaleHeight: canvas.height,
+      ignoreMouse: true,
+      ignoreAnimation: true
+    });
+    await v.render();
 
-  const link = document.createElement("a");
-  link.download = "knowledge-graph.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+    // 触发下载
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `knowledge-graph-${timestamp}.png`;
+    link.href = canvas.toDataURL("image/png", 1.0);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (error) {
+    console.error("PNG导出失败:", error);
+    alert(`PNG导出失败: ${error.message}`);
+  }
+}
+
+/**
+ * 将当前知识图谱导出为SVG矢量图
+ * @param {boolean} [includeStyles=true] - 是否包含内联样式
+ */
+export function exportSVG(includeStyles = true) {
+  try {
+    const svgElement = document.querySelector("svg");
+    const clonedSvg = svgElement.cloneNode(true);
+
+    // 可选：移除交互元素
+    clonedSvg.querySelectorAll('[event-listener]').forEach(el => {
+      el.removeAttribute('event-listener');
+    });
+
+    // 序列化SVG
+    const serializer = new XMLSerializer();
+    let svgString = serializer.serializeToString(clonedSvg);
+
+    // 优化SVG字符串
+    if (!includeStyles) {
+      svgString = svgString.replace(/<style.*?<\/style>/gs, '');
+    }
+
+    // 创建下载
+    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `knowledge-graph-${timestamp}.svg`;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+  } catch (error) {
+    console.error("SVG导出失败:", error);
+    alert(`SVG导出失败: ${error.message}`);
+  }
 }
 
 
@@ -555,6 +625,121 @@ window.exportJSON = async function() {
     console.error(e);
   }
 };
+
+window.exportPNG = async function() {
+  try {
+    // 1. 获取并克隆SVG元素
+    const svgElement = document.querySelector("svg");
+    const clonedSvg = svgElement.cloneNode(true);
+
+    // 2. 添加白色背景矩形作为第一个元素
+    const svgNS = "http://www.w3.org/2000/svg";
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "#FFFFFF");
+    clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+
+    // 3. 计算边界和尺寸
+    const svgGroup = clonedSvg.querySelector("g");
+    const bbox = svgGroup.getBBox();
+    const padding = 50;
+    const width = Math.ceil(bbox.width + padding * 2);
+    const height = Math.ceil(bbox.height + padding * 2);
+
+    // 4. 创建画布并设置尺寸
+    const canvas = document.createElement("canvas");
+    canvas.width = width * 2;
+    canvas.height = height * 2;
+    const ctx = canvas.getContext("2d");
+
+    // 5. 填充背景色
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 6. 调整SVG位置并序列化
+    const serializer = new XMLSerializer();
+    let svgString = serializer.serializeToString(clonedSvg);
+    svgString = svgString.replace(
+      '<g>',
+      `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
+    );
+
+    // 7. 使用canvg渲染
+    const v = await canvg.Canvg.fromString(ctx, svgString, {
+      ignoreDimensions: true,
+      ignoreClear: true,
+      scaleWidth: width * 2,
+      scaleHeight: height * 2,
+      ignoreMouse: true,
+      ignoreAnimation: true
+    });
+
+    // 8. 等待渲染完成
+    await v.render();
+    await new Promise(resolve => setTimeout(resolve, 500)); // 额外等待时间
+
+    // 9. 触发下载
+    const link = document.createElement("a");
+    link.download = `knowledge-graph-${new Date().toISOString().slice(0, 19)}.png`;
+    link.href = canvas.toDataURL("image/png");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (error) {
+    console.error("PNG导出失败:", error);
+    alert(`导出失败: ${error.message}`);
+  }
+}
+
+
+window.exportSVG = async function() {
+  try {
+    // 获取 SVG 元素
+    const svgElement = document.querySelector("svg");
+    if (!svgElement) {
+      throw new Error("未找到SVG元素");
+    }
+
+    // 克隆 SVG 以避免影响原 DOM
+    const clonedSvg = svgElement.cloneNode(true);
+
+    // 添加 XML 命名空间，确保在导出后可正确被各平台解析
+    clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    // 序列化 SVG
+    const serializer = new XMLSerializer();
+    let svgString = serializer.serializeToString(clonedSvg);
+
+    // 添加 XML 声明
+    svgString = '<?xml version="1.0" standalone="no"?>\n' + svgString;
+
+    // 创建 Blob 并生成 URL
+    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    // 创建下载链接
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `knowledge-graph-${timestamp}.svg`;
+    link.href = url;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 释放 URL 对象
+    URL.revokeObjectURL(url);
+
+    console.log("导出SVG成功");
+
+  } catch (error) {
+    console.error("导出SVG失败:", error);
+    alert(`导出SVG失败: ${error.message}`);
+  }
+};
+
 
 // 页面加载时调用
 window.onload = async function () {

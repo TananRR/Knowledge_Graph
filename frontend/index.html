@@ -5,12 +5,14 @@
   <title>知识图谱可视化演示</title>
   <!-- 引入 D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <!-- 引入 canvg（导出 PNG 用） -->
-  <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
+
   <!-- 引入 Font Awesome 图标 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- 引入 particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+
+<!-- 在head中添加 -->
+<script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/lib/umd.js"></script>
 
 <style>
  :root {
@@ -53,14 +55,13 @@
     width: 100%;
     height: 100%;
     z-index: -1; /* 确保在最底层 */
-   background:radial-gradient(circle, #e6f1f2, #d1e8ed, #bddeea, #aad4e9, #9bc9e8)!important;
+   background:radial-gradient(circle, #e6f1f2, #d1e8ed, #bddeea, #aad4e9, #9bc9e8);
   }
 
   svg {
     width: 100vw;
     height: 100vh;
     display: block;
-    background-color: transparent; /* 移除白色背景 */
   }
 
   /* 主工具栏 */
@@ -106,7 +107,7 @@
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
     margin: 10px 0;
   }
-<!--工具栏大小-->
+
   .section-title {
     font-size: 15px;
     font-weight: 600;
@@ -459,17 +460,6 @@ input:focus, select:focus {
   display: block;
 }
 
-  /* 粒子容器样式 */
-#particles-js {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background: linear-gradient(135deg, rgba(148, 201, 196, 0.69), rgba(4, 98, 101, 0.72));
-}
-
 </style>
 </head>
 
@@ -621,24 +611,6 @@ input:focus, select:focus {
       });
     }
 
-    // 导出函数
-    function exportPNG() {
-      console.log('导出PNG功能');
-      document.getElementById('exportOptions').classList.remove('show');
-      showTooltip('正在导出PNG图片...', 1500);
-    }
-
-    function exportJSON() {
-      console.log('导出JSON功能');
-      document.getElementById('exportOptions').classList.remove('show');
-      showTooltip('正在导出JSON数据...', 1500);
-    }
-
-    function exportSVG() {
-      console.log('导出SVG功能');
-      document.getElementById('exportOptions').classList.remove('show');
-      showTooltip('正在导出SVG矢量图...', 1500);
-    }
 
     // 工具提示函数
     function showTooltip(message, duration) {
@@ -650,7 +622,6 @@ input:focus, select:focus {
         tooltip.style.opacity = '0';
       }, duration);
     }
-
 
 
     function expandGraph() {
