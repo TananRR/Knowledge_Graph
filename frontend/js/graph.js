@@ -38,7 +38,7 @@ export function renderGraph(graphData) {
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "#42424E");
+    .attr("fill", "#757583");
 
   // 验证数据
 if (!graphData || !graphData.nodes || !graphData.links) {
@@ -73,7 +73,7 @@ if (!graphData || !graphData.nodes || !graphData.links) {
     .data(graphData.links)
     .enter()
     .append("line")
-    .attr("stroke", "#42424E")
+    .attr("stroke", "#757583")
     .attr("stroke-width", 1.5)
     .attr("marker-end", "url(#arrow)");
 
