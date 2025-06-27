@@ -45,23 +45,45 @@ export function renderGraph(graphData) {
   svg.call(zoomBehavior);
 
   // 定义箭头标记
-  // 在 renderGraph 函数中，zoomBehavior 定义之后添加：
-  const defs = svg.append("defs");
+// 定义两种箭头标记（普通和高亮）
+const defs = svg.append("defs");
 
-  // 箭头标记
-  defs.selectAll("marker")
-    .data(["arrow"])
-    .enter().append("marker")
-    .attr("id", d => d)
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 25)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-    .append("path")
-    .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "#999");
+// 普通箭头
+defs.append("marker")
+  .attr("id", "arrow-normal")
+  .attr("viewBox", "0 -5 10 10")
+  .attr("refX", 30)
+  .attr("refY", 0)
+  .attr("markerWidth", 8)
+  .attr("markerHeight", 8)
+  .attr("orient", "auto")
+  .append("path")
+  .attr("d", "M0,-5L10,0L0,5")
+  .attr("fill", "#999");
+
+defs.append("marker")
+  .attr("id", "arrow-dark")
+  .attr("viewBox", "0 -5 10 10")
+  .attr("refX", 30)
+  .attr("refY", 0)
+  .attr("markerWidth", 8)
+  .attr("markerHeight", 8)
+  .attr("orient", "auto")
+  .append("path")
+  .attr("d", "M0,-5L10,0L0,5")
+  .attr("fill", "#e0e0e0");
+// 高亮箭头
+defs.append("marker")
+  .attr("id", "arrow-highlight")
+  .attr("viewBox", "0 -5 10 10")
+  .attr("refX", 30)
+  .attr("refY", 0)
+  .attr("markerWidth", 8)
+  .attr("markerHeight", 8)
+  .attr("orient", "auto")
+  .append("path")
+  .attr("d", "M0,-5L10,0L0,5")
+  .attr("fill", "#78909C");
 
   // 验证数据
 if (!graphData || !graphData.nodes || !graphData.links) {
@@ -90,15 +112,15 @@ if (!graphData || !graphData.nodes || !graphData.links) {
 
   simulationRef = simulation;
 
-  // 画关系线
-  const link = container.append("g")
+// 画关系线 - 初始使用普通箭头
+const link = container.append("g")
   .selectAll("line")
   .data(graphData.links)
   .enter()
   .append("line")
-  .attr("stroke", "rgba(120,120,120,0.3)")  // 半透明灰色
-  .attr("stroke-width", 0.8)                // 更细的线宽
-  .attr("marker-end","url(#arrow)");
+  .attr("stroke", "rgba(120,120,120,0.3)")
+  .attr("stroke-width", 0.8)
+  .attr("marker-end", "url(#arrow-normal)"); // 初始使用普通箭头
 
   linkRef = link;
 
@@ -111,8 +133,6 @@ if (!graphData || !graphData.nodes || !graphData.links) {
     .text(d => d.type)
     .attr("font-size", 10)
     .attr("fill", "#666");
-
-
   // 画节点圆圈
 const node = container.append("g")
   .selectAll("circle")
@@ -154,6 +174,9 @@ const label = container.append("g")
   .attr("stroke", "white")
   .attr("stroke-width", 1);
 
+
+
+
   // 模拟更新函数
   simulation.on("tick", () => {
     link
@@ -181,23 +204,34 @@ const label = container.append("g")
   });
 
   node
-    .on("mouseover", function(event, d) {
-      node.attr("opacity", o =>
-        o.id === d.id || graphData.links.some(rel =>
-          (rel.source.id === d.id && rel.target.id === o.id) ||
-          (rel.target.id === d.id && rel.source.id === o.id)
-        ) ? 1 : 0.2
-      );
-    // 修改后的高亮颜色
-link.attr("stroke", rel =>
-  rel.source.id === d.id || rel.target.id === d.id ? "#78909C" : "#e0e0e0"
-);
-    })
-    .on("mouseout", () => {
-      node.attr("opacity", 1);
-      link.attr("stroke", "rgba(120,120,120,0.3)");
-    });
+node
+  .on("mouseover", function(event, d) {
+    // 设置节点透明度
+    node.attr("opacity", o =>
+      o.id === d.id || graphData.links.some(rel =>
+        (rel.source.id === d.id && rel.target.id === o.id) ||
+        (rel.target.id === d.id && rel.source.id === o.id)
+      ) ? 1 : 0.2
+    );
 
+    // 更新连线和箭头
+    link
+      .attr("stroke", rel =>
+        rel.source.id === d.id || rel.target.id === d.id ? "#78909C" : "#e0e0e0"
+      )
+      .attr("marker-end", rel =>
+        rel.source.id === d.id || rel.target.id === d.id
+          ? "url(#arrow-highlight)"
+          : "url(#arrow-dark)"
+      );
+  })
+  .on("mouseout", function() {
+    // 恢复默认状态
+    node.attr("opacity", 1);
+    link
+      .attr("stroke", "rgba(120,120,120,0.3)")
+      .attr("marker-end", "url(#arrow-normal)");
+  });
   // 拖拽函数
   function dragStarted(event, d) {
     if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -304,49 +338,42 @@ export function focusNode() {
   // 高亮显示
   nodeRef
     .attr("stroke", d =>
-      d.id === match.id || neighbors.some(n => n.id === d.id) ? "#ff0000" : "none"
+      d.id === match.id || neighbors.some(n => n.id === d.id) ? "#fe865c" : "none"
     )
     .attr("stroke-width", d =>
       d.id === match.id || neighbors.some(n => n.id === d.id) ? 3 : 1
     );
 
-  linkRef
-    .attr("stroke", d =>
-      d.source.id === match.id || d.target.id === match.id ? "#f00" : "#aaa"
-    )
-    .attr("stroke-width", d =>
-      d.source.id === match.id || d.target.id === match.id ? 2.5 : 1.5
-    );
 }
 
-export function cancelFocus() {
-  if (!currentData || !simulationRef || !nodeRef || !linkRef) return;
-
-  // 重置所有节点和连线样式
-  nodeRef
-    .attr("stroke", "none")
-    .attr("stroke-width", 1)
-    .attr("fill", d => d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e"));
-
-  linkRef
-    .attr("stroke", "#aaa")
-    .attr("stroke-width", 1.5);
-
-  // 重置高亮标记
-  if (currentData.nodes) {
-    currentData.nodes.forEach(entity => {
-      entity.highlight = false;
-    });
-  }
-
-  // 重置模拟
-  simulationRef.alpha(0.1).restart();
-
-  // 重置缩放
-  svgRef.transition()
-    .duration(750)
-    .call(zoomBehavior.transform, d3.zoomIdentity);
-}
+//export function cancelFocus() {
+//  if (!currentData || !simulationRef || !nodeRef || !linkRef) return;
+//
+//  // 重置所有节点和连线样式
+//  nodeRef
+//    .attr("stroke", "none")
+//    .attr("stroke-width", 1)
+//    .attr("fill", d => d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e"));
+//
+//  linkRef
+//    .attr("stroke", "#aaa")
+//    .attr("stroke-width", 1.5);
+//
+//  // 重置高亮标记
+//  if (currentData.nodes) {
+//    currentData.nodes.forEach(entity => {
+//      entity.highlight = false;
+//    });
+//  }
+//
+//  // 重置模拟
+//  simulationRef.alpha(0.1).restart();
+//
+//  // 重置缩放
+//  svgRef.transition()
+//    .duration(750)
+//    .call(zoomBehavior.transform, d3.zoomIdentity);
+//}
 
 export async function exportPNG() {
   const svgElement = document.querySelector("svg");
@@ -391,6 +418,8 @@ export async function exportPNG() {
 window.handleUpload = async function () {
   const input = document.getElementById("upload-file");
   const file = input.files[0];
+  const fileNameDisplay = document.getElementById("file-name"); // 获取文件名显示元素
+
   if (!file) {
     alert("请先选择文件！");
     return;
@@ -403,9 +432,13 @@ window.handleUpload = async function () {
       currentGraphId = result.graph_id;
       document.querySelector("button[onclick='handleSearch()']").disabled = false;
 
+      // 清除文件选择和显示
+      input.value = ""; // 重置文件输入框
+      fileNameDisplay.textContent = ""; // 清空文件名显示
+
       try {
         const graphData = await fetchGraphData(currentGraphId);
-        console.log("图谱数据：", graphData);  // 👉 看看是啥
+        console.log("图谱数据：", graphData);
         renderGraph(graphData);
       } catch (err2) {
         alert("获取或渲染图谱失败！");
@@ -497,8 +530,7 @@ window.handleSearch = async function () {
 
       // 更新节点样式
       nodeRef.attr("fill", d =>
-        d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e")
-      );
+        d.highlight ?  "#FFDC90":"#009ac8" );
 
       // 如果有匹配结果，聚焦到第一个匹配节点
       document.getElementById("searchInput").value = results[0].name;
