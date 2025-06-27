@@ -54,7 +54,7 @@
   /* 主工具栏 */
    #main-toolbar {
     position: absolute;
-    top: 20px;
+    top: 10px;
     left: 20px;
     z-index: 1000;
     display: flex;
@@ -320,7 +320,7 @@ input:focus, select:focus {
   /* 响应式调整 */
   @media (max-width: 768px) {
     #main-toolbar {
-      top: 10px;
+      top: 5px;
       left: 10px;
       width: calc(100% - 20px);
       flex-direction: row;
@@ -330,7 +330,7 @@ input:focus, select:focus {
 
     .toolbar-card {
       width: calc(50% - 10px);
-      padding: 12px;
+      padding: 10px;
     }
 
     #action-bar {
@@ -371,69 +371,138 @@ input:focus, select:focus {
     opacity: 0;
     transition: opacity 0.2s;
   }
+  .file-upload-container {
+  border: 2px dashed #ccc;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-bottom:15px;
+}
+
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #666;
+}
+
+.file-upload-input {
+  display: none; /* 隐藏原始 input */
+}
+
+.file-upload-name {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+#main-toolbar {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 15px;
+}
+
+#tab-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tab-button {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+#tab-content {
+  flex-grow: 1;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
 </style>
 </head>
 
 <body>
   <!-- 主工具栏 -->
-  <div id="main-toolbar">
-    <div class="toolbar-card">
-      <div class="toolbar-section">
-        <div class="section-title">
-          <i class="fas fa-search"></i>
-          <span>节点查询</span>
-        </div>
-        <input type="text" id="searchInput" placeholder="输入关键词搜索..." />
-        <button onclick="handleSearch()" class="success">
-          <i class="fas fa-search"></i>
-          <span>查询节点</span>
-        </button>
-        <button onclick="loadSelectedGraph()" class="secondary" style="margin-top: 12px;">
-          <i class="fas fa-times-circle"></i>
-          <span>取消聚焦</span>
-        </button>
-      </div>
+<div id="main-toolbar">
+  <div id="tab-menu">
+    <button class="tab-button active" data-target="search-tab"><i class="fas fa-search"></i> 查询</button>
+    <button class="tab-button" data-target="upload-tab"><i class="fas fa-file-upload"></i> 上传</button>
+    <button class="tab-button" data-target="manage-tab"><i class="fas fa-network-wired"></i> 管理</button>
+  </div>
 
+  <div id="tab-content">
+    <div class="toolbar-card tab-panel active" id="search-tab">
+      <!-- 原查询部分 -->
       <div class="toolbar-section">
-        <div class="section-title">
-          <i class="fas fa-file-import"></i>
-          <span>数据上传</span>
-        </div>
-        <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
-        <button onclick="handleUpload()">
-          <i class="fas fa-cloud-upload-alt"></i>
-          <span>上传图谱数据</span>
+        <div class="section-title"><i class="fas fa-search"></i> 节点查询</div>
+        <input type="text" id="searchInput" placeholder="输入关键词搜索..." />
+        <button onclick="handleSearch()" class="success"><i class="fas fa-search"></i> 查询节点</button>
+        <button onclick="loadSelectedGraph()" class="secondary" style="margin-top: 12px;">
+          <i class="fas fa-times-circle"></i> 取消聚焦
         </button>
       </div>
     </div>
 
-    <div class="toolbar-card">
-       <div class="toolbar-section">
-        <div class="section-title">
-          <i class="fas fa-network-wired"></i>
-          <span>图谱管理</span>
+    <div class="toolbar-card tab-panel" id="upload-tab">
+      <!-- 原上传部分 -->
+      <div class="toolbar-section">
+        <div class="section-title"><i class="fas fa-file-import"></i> 数据上传</div>
+        <div class="file-upload-container">
+          <label class="file-upload-label" for="upload-file">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>点击选择文件或拖放至此</span>
+          </label>
+          <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx" />
+          <div class="file-upload-name" id="file-name"></div>
         </div>
+        <button onclick="handleUpload()"><span>上传图谱数据</span></button>
+      </div>
+    </div>
+
+    <div class="toolbar-card tab-panel" id="manage-tab">
+      <!-- 原图谱管理部分 -->
+      <div class="toolbar-section">
+        <div class="section-title"><i class="fas fa-network-wired"></i> 图谱管理</div>
         <select id="graphSelect">
           <option value="">选择要加载的图谱</option>
         </select>
-        <button onclick="loadSelectedGraph()">
-          <i class="fas fa-sync"></i>
-          <span>加载图谱</span>
-        </button>
+        <button onclick="loadSelectedGraph()"><i class="fas fa-sync"></i> 加载图谱</button>
       </div>
-
       <div class="toolbar-section">
-        <button class="danger" onclick="handleDeleteAll()">
-          <i class="fas fa-trash-alt"></i>
-          <span>删除全部图谱</span>
-        </button>
-        <button class="danger" onclick="handleDeleteGraph()">
-          <i class="fas fa-trash"></i>
-          <span>删除当前图谱</span>
-        </button>
+        <button class="danger" onclick="handleDeleteAll()"><i class="fas fa-trash-alt"></i> 删除全部图谱</button>
+        <button class="danger" onclick="handleDeleteGraph()"><i class="fas fa-trash"></i> 删除当前图谱</button>
       </div>
     </div>
   </div>
+</div>
+
 
 
  <!-- 导出下拉菜单 -->
@@ -496,6 +565,10 @@ input:focus, select:focus {
 
   <script type="module" src="./js/graph.js"></script>
  <script>
+    document.getElementById("upload-file").addEventListener("change", function () {
+    const fileName = this.files[0]?.name || "未选择文件";
+    document.getElementById("file-name").textContent = fileName;
+  });
     // 导出菜单切换函数
     function toggleExportMenu() {
       const exportOptions = document.getElementById('exportOptions');
@@ -563,6 +636,17 @@ input:focus, select:focus {
       tooltip.style.left = `${e.pageX + 10}px`;
       tooltip.style.top = `${e.pageY + 10}px`;
     });
+    document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 移除所有 active 状态
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+      // 添加当前的 active 状态
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
   </script>
 </body>
 </html>
