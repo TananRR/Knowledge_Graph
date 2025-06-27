@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
+    <meta charset="UTF-8" />
   <title>知识图谱可视化演示</title>
   <!-- 引入 D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -9,18 +9,20 @@
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
   <!-- 引入 Font Awesome 图标 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- 引入 particles.js -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
 <style>
  :root {
-    --primary-color: #4361e6;
+    --primary-color: #6876E0;
     --primary-light: #4895ef;
-    --secondary-color: #3f37c9;
+    --secondary-color: #449EEF;
     --accent-color: #f72585;
     --success-color: #4cc9f0;
     --warning-color: #f8961e;
     --danger-color: #ef233c;
-    --background-color: #f8f9fa;
-    --card-bg: #ffffff;
+    --background-color: rgba(248, 249, 250, 0.8); /* 调整为半透明 */
+    --card-bg: rgba(255, 255, 255, 0.9); /* 调整为半透明 */
     --text-color: #2b2d42;
     --text-light: #8d99ae;
     --border-color: #e9ecef;
@@ -39,16 +41,26 @@
     height: 100%;
     overflow: hidden;
     font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
-    background-color: var(--background-color);
     color: var(--text-color);
     line-height: 1.6;
+  }
+
+  /* 粒子容器样式 */
+  #particles-js {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* 确保在最底层 */
+   background:radial-gradient(circle, #e6f1f2, #d1e8ed, #bddeea, #aad4e9, #9bc9e8)!important;
   }
 
   svg {
     width: 100vw;
     height: 100vh;
     display: block;
-    background-color: var(--card-bg);
+    background-color: transparent; /* 移除白色背景 */
   }
 
   /* 主工具栏 */
@@ -445,10 +457,23 @@ input:focus, select:focus {
   display: block;
 }
 
+  /* 粒子容器样式 */
+#particles-js {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(148, 201, 196, 0.69), rgba(4, 98, 101, 0.72));
+}
+
 </style>
 </head>
 
 <body>
+<!-- 在 body 开始标签后添加粒子容器 -->
+<div id="particles-js"></div>
   <!-- 主工具栏 -->
 <div id="main-toolbar">
   <div id="tab-menu">
@@ -646,6 +671,64 @@ input:focus, select:focus {
       btn.classList.add('active');
       document.getElementById(btn.dataset.target).classList.add('active');
     });
+  });
+
+     particlesJS("particles-js", {
+    particles: {
+      number: {
+        value: 80,
+        density: {
+          enable: true,
+          value_area: 800
+        }
+      },
+      color: {
+        value: "#ffffff"
+      },
+      shape: {
+        type: "circle",
+        stroke: {
+          width: 0,
+          color: "#000000"
+        }
+      },
+      opacity: {
+        value: 0.5,
+        random: false
+      },
+      size: {
+        value: 3,
+        random: true
+      },
+      line_linked: {
+        enable: true,
+        distance: 150,
+        color: "#ffffff",
+        opacity: 0.4,
+        width: 1
+      },
+      move: {
+        enable: true,
+        speed: 6,
+        direction: "none",
+        random: true,
+        straight: false,
+        out_mode: "out"
+      }
+    },
+    interactivity: {
+      detect_on: "canvas",
+      events: {
+        onhover: {
+          enable: false
+        },
+        onmousemove: {
+          enable: true,
+          mode: "connect"
+        }
+      }
+    },
+    retina_detect: true
   });
   </script>
 </body>
