@@ -9,6 +9,23 @@ let linkRef = null;
 let svgRef = null;
 let zoomBehavior = null;
 
+// graph.js 顶部（在绘制函数之前）
+const colorMap = {
+
+  "Person": "#A8C5EB",      // 人物 - 淡雅天蓝
+  "Organization": "#F5B8C6", // 组织 - 樱花粉
+  "Location": "#9DD3F3",    // 地点 - 清澈水蓝
+  "Event": "#C7B3D2",       // 事件 - 薰衣草紫
+  "Concept": "#A3D8E0",     // 概念 - 薄荷蓝绿
+  "DATE": "#F0C987",        // 日期 - 琥珀黄
+  "Number": "#B8D9A8",      // 数字 - 新芽绿
+  "Work": "#D8B3D8"         // 作品 - 丁香紫
+
+};
+
+// 默认颜色（未匹配类型时使用）
+const defaultColor = "#64748b";
+
 export function renderGraph(graphData) {
   d3.select("svg").selectAll("*").remove();
 
@@ -28,8 +45,14 @@ export function renderGraph(graphData) {
   svg.call(zoomBehavior);
 
   // 定义箭头标记
-  svg.append("defs").append("marker")
-    .attr("id", "arrow")
+  // 在 renderGraph 函数中，zoomBehavior 定义之后添加：
+  const defs = svg.append("defs");
+
+  // 箭头标记
+  defs.selectAll("marker")
+    .data(["arrow"])
+    .enter().append("marker")
+    .attr("id", d => d)
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 25)
     .attr("refY", 0)
@@ -38,7 +61,7 @@ export function renderGraph(graphData) {
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "#757583");
+    .attr("fill", "#999");
 
   // 验证数据
 if (!graphData || !graphData.nodes || !graphData.links) {
@@ -69,13 +92,13 @@ if (!graphData || !graphData.nodes || !graphData.links) {
 
   // 画关系线
   const link = container.append("g")
-    .selectAll("line")
-    .data(graphData.links)
-    .enter()
-    .append("line")
-    .attr("stroke", "#757583")
-    .attr("stroke-width", 1.5)
-    .attr("marker-end", "url(#arrow)");
+  .selectAll("line")
+  .data(graphData.links)
+  .enter()
+  .append("line")
+  .attr("stroke", "rgba(120,120,120,0.3)")  // 半透明灰色
+  .attr("stroke-width", 0.8)                // 更细的线宽
+  .attr("marker-end","url(#arrow)");
 
   linkRef = link;
 
@@ -89,38 +112,47 @@ if (!graphData || !graphData.nodes || !graphData.links) {
     .attr("font-size", 10)
     .attr("fill", "#666");
 
+
   // 画节点圆圈
-  const node = container.append("g")
-    .selectAll("circle")
-    .data(graphData.nodes)
-    .enter()
-    .append("circle")
-    .attr("r", d => d.type === "Person" ? 20 : 15) // 人节点稍大
-    .attr("fill", d => {
-      switch(d.type) {
-        case "Person": return "#1f77b4";
-        case "Location": return "#ff7f0e";
-        case "Interest": return "#2ca02c";
-        default: return "#9467bd";
-      }
-    })
-    .call(d3.drag()
-      .on("start", dragStarted)
-      .on("drag", dragged)
-      .on("end", dragEnded));
+const node = container.append("g")
+  .selectAll("circle")
+  .data(graphData.nodes)
+  .enter()
+  .append("circle")
+  .attr("r", d => {
+    // 按类型分级大小
+    if (d.type === "Person") return 15;
+    if (d.type === "Organization") return 15;
+    return 14;
+  })
+  .attr("fill", d => colorMap[d.type] || defaultColor)
+  .attr("stroke", d => d3.color(colorMap[d.type] || defaultColor).darker(0.5)) // 深色边框
+  .attr("stroke-width", 1.5)
+  .attr("filter", "url(#nodeGlow)");        // 添加发光效果（需在defs定义）
 
   nodeRef = node;
+// 在 node 定义后添加：
+const drag = d3.drag()
+  .on("start", dragStarted)
+  .on("drag", dragged)
+  .on("end", dragEnded);
 
+node.call(drag);
   // 节点文字标签
-  const label = container.append("g")
-    .selectAll("text")
-    .data(graphData.nodes)
-    .enter()
-    .append("text")
-    .text(d => d.name)
-    .attr("font-size", 12)
-    .attr("dx", 25)
-    .attr("dy", ".35em");
+const label = container.append("g")
+  .selectAll("text")
+  .data(graphData.nodes)
+  .enter()
+  .append("text")
+  .text(d => d.name)
+  .attr("font-size", 11)
+  .attr("dx", 25)                          // 更近的标签距离
+  .attr("dy", ".3em")
+  .attr("fill", "#222")                    // 更深的文字颜色
+  .attr("font-weight", "bold")             // 加粗
+  .attr("paint-order", "stroke")           // 文字描边（提高可读性）
+  .attr("stroke", "white")
+  .attr("stroke-width", 1);
 
   // 模拟更新函数
   simulation.on("tick", () => {
@@ -156,13 +188,14 @@ if (!graphData || !graphData.nodes || !graphData.links) {
           (rel.target.id === d.id && rel.source.id === o.id)
         ) ? 1 : 0.2
       );
-      link.attr("stroke", rel =>
-        rel.source.id === d.id || rel.target.id === d.id ? "#f00" : "#aaa"
-      );
+    // 修改后的高亮颜色
+link.attr("stroke", rel =>
+  rel.source.id === d.id || rel.target.id === d.id ? "#78909C" : "#e0e0e0"
+);
     })
     .on("mouseout", () => {
       node.attr("opacity", 1);
-      link.attr("stroke", "#030324");
+      link.attr("stroke", "rgba(120,120,120,0.3)");
     });
 
   // 拖拽函数

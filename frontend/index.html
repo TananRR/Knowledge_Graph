@@ -289,7 +289,7 @@ input:focus, select:focus {
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    font-size: 14px;
+    font-size: 11px;
     line-height: 1.6;
     box-shadow: var(--shadow-md);
     max-width: 220px;
@@ -305,7 +305,7 @@ input:focus, select:focus {
     display: block;
     margin-bottom: 10px;
     color: var(--primary-color);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -315,8 +315,8 @@ input:focus, select:focus {
   .legend-item {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    padding: 3px 0;
+    margin-bottom: 2px;
+    padding: 2px 0;
   }
 
   .legend-color {
@@ -324,7 +324,7 @@ input:focus, select:focus {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 5px;
     flex-shrink: 0;
     box-shadow: var(--shadow-sm);
   }
@@ -498,17 +498,20 @@ input:focus, select:focus {
     <div class="toolbar-card tab-panel" id="upload-tab">
       <!-- 原上传部分 -->
       <div class="toolbar-section">
-        <div class="section-title"><i class="fas fa-file-import"></i> 数据上传</div>
-        <div class="file-upload-container">
-          <label class="file-upload-label" for="upload-file">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span>点击选择文件或拖放至此</span>
-          </label>
-          <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx" />
-          <div class="file-upload-name" id="file-name"></div>
-        </div>
-        <button onclick="handleUpload()"><span>上传图谱数据</span></button>
-      </div>
+  <div class="section-title"><i class="fas fa-file-import"></i> 数据上传</div>
+  <div class="file-upload-container">
+    <label class="file-upload-label" for="upload-file">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <span>点击选择文件或拖放至此</span>
+    </label>
+    <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx,.json" />
+    <div class="file-upload-name" id="file-name"></div>
+  </div>
+  <button onclick="handleUpload()">
+    <i class="fas fa-upload"></i> 上传图谱数据
+  </button>
+  <div class="upload-status" id="upload-status"></div>
+</div>
     </div>
 
     <div class="toolbar-card tab-panel" id="manage-tab">
@@ -557,33 +560,41 @@ input:focus, select:focus {
   <svg></svg>
 
   <!-- 图例 -->
-  <div id="legend">
-    <strong><i class="fas fa-map-marked-alt"></i> 实体类型图例</strong>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#4361ee;"></span>
-      Person (人物)
-    </div>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#f72585;"></span>
-      Organization (组织)
-    </div>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#4cc9f0;"></span>
-      Location (地点)
-    </div>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#7209b7;"></span>
-      Event (事件)
-    </div>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#4895ef;"></span>
-      Concept (概念)
-    </div>
-    <div class="legend-item">
-      <span class="legend-color" style="background:#f8961e;"></span>
-      Date (日期)
-    </div>
+<div id="legend">
+  <strong><i class="fas fa-map-marked-alt"></i> 实体类型图例</strong>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#A8C5EB;"></span>
+    Person (人物)
   </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#F5B8C6;"></span>
+    Organization (组织)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#9DD3F3;"></span>
+    Location (地点)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#C7B3D2;"></span>
+    Event (事件)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#A3D8E0;"></span>
+    Concept (概念)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#F0C987;"></span>
+    DATE (日期)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#B8D9A8;"></span>
+    Number (数字)
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" style="background:#D8B3D8;"></span>
+    Work (作品)
+  </div>
+</div>
 
   <!-- 工具提示 -->
   <div class="tooltip" id="tooltip"></div>
