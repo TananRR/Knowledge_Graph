@@ -38,7 +38,7 @@ export function renderGraph(graphData) {
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5")
-    .attr("fill", "#aaa");
+    .attr("fill", "#42424E");
 
   // 验证数据
 if (!graphData || !graphData.nodes || !graphData.links) {
@@ -73,7 +73,7 @@ if (!graphData || !graphData.nodes || !graphData.links) {
     .data(graphData.links)
     .enter()
     .append("line")
-    .attr("stroke", "#aaa")
+    .attr("stroke", "#42424E")
     .attr("stroke-width", 1.5)
     .attr("marker-end", "url(#arrow)");
 
@@ -162,7 +162,7 @@ if (!graphData || !graphData.nodes || !graphData.links) {
     })
     .on("mouseout", () => {
       node.attr("opacity", 1);
-      link.attr("stroke", "#aaa");
+      link.attr("stroke", "#030324");
     });
 
   // 拖拽函数
