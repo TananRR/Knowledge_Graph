@@ -1,7 +1,10 @@
 from neo4j import GraphDatabase
 import json
 import re
-import time
+
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
+
+
 def create_or_update_user_password(session, user_id, password):
     # 先查用户和密码节点是否存在；
     # 不存在就创建新节点；
@@ -38,6 +41,8 @@ def create_or_update_user_password(session, user_id, password):
         session.run(cypher_cleanup, old_password=old_password)
     # 返回当前用户和密码，前端可以再与输入的参数进行对比检查，若符合，则创建或更新成功
     return record["user_id"], record["password"]
+
+
 def check_user_password(session, user_id: str, password: str) -> bool:
     """
     校验用户 ID 和密码是否正确关联。
@@ -53,6 +58,7 @@ def check_user_password(session, user_id: str, password: str) -> bool:
     )
     return result.single() is not None
 
+
 def delete_all_users_and_passwords(session):
     """
     删除数据库中所有用户节点和密码节点及它们之间的关系。
@@ -64,7 +70,6 @@ def delete_all_users_and_passwords(session):
     print("所有用户和密码已删除")
 
 
-
 # 处理非法关系名
 def sanitize_relation_type(rel_type):
     rel_type = rel_type.replace("-", "_")
@@ -72,6 +77,8 @@ def sanitize_relation_type(rel_type):
         return rel_type.upper()
     else:
         raise ValueError(f"非法的关系类型: {rel_type}")
+
+
 # 为每次上传的数据打上唯一标识
 def generate_new_graph_id(session, user_id):
     """
@@ -101,6 +108,7 @@ def generate_new_graph_id(session, user_id):
     new_graph_id = f"{user_id}_{max_index + 1}"
     print(f"新图谱ID：{new_graph_id}")
     return new_graph_id
+
 
 # 创建实体节点，绑定 graph_id 和 user_id
 def create_entities(session, entities, graph_id, user_id):
@@ -172,7 +180,6 @@ def create_relations(session, relations, entities, graph_id, user_id):
         )
 
 
-
 # 查询某个图谱的所有内容
 def query_graph(session, graph_id):
     print(f"查询图谱 graph_id = {graph_id} 的结构：")
@@ -203,7 +210,7 @@ def query_graph(session, graph_id):
         r = dict(record["r"])
         # 打印检查
         print(f"({a}) -[{r}]-> ({b})")
-        
+
         # 用id或name作为唯一标识（根据你Neo4j的数据建模）
         a_id = a.get("id") or a.get("name")
         b_id = b.get("id") or b.get("name")
@@ -224,6 +231,7 @@ def query_graph(session, graph_id):
         "links": links
     }
 
+
 # 查询某个用户的所有图谱 ID
 def list_user_graphs(session, user_id):
     result = session.run(
@@ -235,6 +243,8 @@ def list_user_graphs(session, user_id):
     for gid in graph_ids:
         print(f" - {gid}")
     return graph_ids
+
+
 # 查询某个用户的所有图谱（完整结构）
 def query_graphs_by_user(session, user_id):
     print(f" 查询用户 {user_id} 的所有图谱结构（实体 + 关系）：")
@@ -274,7 +284,6 @@ def query_graphs_by_user(session, user_id):
         })
 
     return all_graphs
-
 
 
 # 查询所有图谱
@@ -385,10 +394,6 @@ def convert_to_graph_structure(record):
     }
 
 
-
-
-
-
 # 删除所有图谱
 def clear_all_graphs(session):
     print("清除所有图谱...")
@@ -409,6 +414,7 @@ def clear_graphs_by_user(session, user_id):
     session.run("MATCH (n:Entity) WHERE n.user_id = $user_id DETACH DELETE n", user_id=user_id)
     print("用户图谱删除完成。")
 
+
 # 查询某个图谱里的所有实体id
 def get_entity_ids_by_graph(session, graph_id):
     """
@@ -424,6 +430,8 @@ def get_entity_ids_by_graph(session, graph_id):
     entity_ids = [record["entity_id"] for record in result]
     print(f"图谱 {graph_id} 中的实体 ID 列表：", entity_ids)
     return entity_ids
+
+
 # 查询某个图谱里的实体节点数
 def count_entities_by_graph(session, graph_id):
     """
@@ -441,7 +449,8 @@ def count_entities_by_graph(session, graph_id):
     print(f"图谱 {graph_id} 中的实体节点总数：{count}")
     return count
 
-#删除知识
+
+# 删除知识
 def delete_entity_by_id(session, entity_id, graph_id, user_id):
     """
     删除指定图谱中、某用户的某个实体节点及其相关关系。
@@ -479,6 +488,7 @@ def delete_entity_by_id(session, entity_id, graph_id, user_id):
     print("实体及其相关关系已删除")
     return True
 
+
 # 关键词查询某用户的实体
 def search_entities_by_keyword(session, user_id, keyword):
     print(f"查询用户 {user_id} 下包含关键词 '{keyword}' 的实体：")
@@ -505,22 +515,6 @@ def create_graph(entities, relations, graph_id, user_id):
         create_entities(session, entities, graph_id, user_id)
         create_relations(session, relations, entities, graph_id, user_id)
 
-
-def search_entities(user_id, keyword):
-    with driver.session() as session:
-        return search_entities_by_keyword(session, user_id, keyword)
-
-
-def get_graph_data(graph_id):
-    with driver.session() as session:
-        return query_graph(session, graph_id)
-
-
-def delete_graph(graph_id):
-    with driver.session() as session:
-        clear_graph_by_id(session, graph_id)
-
-
 # 主函数
 def main():
     # 配置 Neo4j 数据库连接
@@ -545,19 +539,18 @@ def main():
     #     delete_all_users_and_passwords(session)
 
     file_path = "D:/A-trainingStore/Knowledge_Graph/extracted_result.json"
-    
+
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
 
-
     with driver.session() as session:
-         #删除图谱：
+        # 删除图谱：
         # clear_all_graphs(session)
         # clear_graph_by_id(session, graph_id)
         # clear_graphs_by_user(session, user_id)
 
         # Step 1: 自动生成唯一 graph_id，user_id
-        user_id='user003'
+        user_id = 'user003'
         graph_id = generate_new_graph_id(session, user_id)
         print(f"\n[1] 生成 graph_id: {graph_id}")
         # # 上传知识图谱
@@ -613,6 +606,7 @@ def main():
         # clear_graph_by_id(session, graph_id)
 
         print("\n✅ 所有测试完成。")
+
 
 if __name__ == "__main__":
     main()

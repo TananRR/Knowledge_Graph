@@ -2,7 +2,7 @@
 import spacy
 from spacy.matcher import Matcher
 import json
-import numpy as np
+
 
 try:
     nlp = spacy.load("zh_core_web_md")
