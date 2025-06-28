@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 知识图谱系统</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css   " rel="stylesheet">
     <link rel="stylesheet" href="static/css/auth.css">
 </head>
 <body>
-<!-- 打字动画背景容器 -->
+
+    <<!-- 新增两侧垂直打字动画 -->
+    <div class="vertical-typing-container">
+        <div class="typing-left" id="typingLeft"></div>
+        <div class="typing-right" id="typingText"></div>
+    </div>
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-logo">
-                <img src="https://via.placeholder.com/60x60" alt="系统Logo">
+<!--                <img src="https://via.placeholder.com/60x60   " alt="系统Logo">-->
                 <h3>知识图谱系统</h3>
                 <p class="text-muted">请登录您的账号</p>
             </div>
@@ -37,7 +42,7 @@
                     <label class="form-check-label" for="rememberMe">记住我</label>
                 </div>
 
-               <!-- 在 login.html 和 register.html 中找到按钮部分 -->
+               <!-- 在 Kowledge_Graph.html 和 register.html 中找到按钮部分 -->
                 <div class="text-center">  <!-- 添加这行 -->
                      <button type="submit" class="btn btn-primary auth-btn">登录</button>
                 </div>
@@ -53,8 +58,54 @@
         </div>
     </div>
 
+
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // 垂直打字动画
+        const textLeft = "欢 迎 来 到";
+        const textRight = "知 识 图 谱";
+        const typingLeftElement = document.getElementById('typingLeft');
+        const typingRightElement = document.getElementById('typingText');
+
+        function typeVertical(element, text, speed, callback) {
+            const lines = text.split('\n');
+            let i = 0, j = 0;
+
+            function typeLine() {
+                if (i < lines.length) {
+                    if (j <= lines[i].length) {
+                        element.innerHTML = lines.slice(0, i).join('<br>') +
+                                          '<br>' + lines[i].substring(0, j);
+                        j++;
+                        setTimeout(typeLine, speed);
+                    } else {
+                        i++;
+                        j = 0;
+                        element.innerHTML = lines.slice(0, i).join('<br>');
+                        if (i < lines.length) {
+                            setTimeout(typeLine, speed * 2);
+                        } else if (callback) {
+                            callback();
+                        }
+                    }
+                }
+            }
+            typeLine();
+        }
+
+        // 先打左侧文字，再打右侧文字
+        typeVertical(typingLeftElement, textLeft, 150, function() {
+            setTimeout(() => {
+                typeVertical(typingRightElement, textRight, 150);
+            }, 300);
+        });
+
+        // 登录表单处理
+        const loginForm = document.getElementById('loginForm');
+        const submitButton = loginForm.querySelector('.auth-btn');
+
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // 清除错误状态
@@ -64,15 +115,18 @@
 
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
 
             let isValid = true;
 
+            // 用户名验证
             if (!username.trim()) {
                 document.getElementById('usernameError').textContent = '请输入用户名';
                 document.getElementById('usernameError').classList.remove('d-none');
                 isValid = false;
             }
 
+            // 密码验证
             if (!password) {
                 document.getElementById('passwordError').textContent = '请输入密码';
                 document.getElementById('passwordError').classList.remove('d-none');
@@ -83,55 +137,71 @@
                 isValid = false;
             }
 
+            // 如果验证通过，发送登录请求
             if (isValid) {
-                // 模拟登录成功
-                console.log('登录信息:', { username, password });
-                // 在实际应用中，这里会发送AJAX请求到后端
-                // 登录成功后跳转到首页
-                // window.location.href = 'index.html';
+                try {
+                    // 设置按钮为加载状态
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 登录中...';
 
-                // 模拟登录失败（用于演示）
-                document.getElementById('loginError').classList.remove('d-none');
+                    // 发送登录请求
+                    const response = await fetch('http://127.0.0.1:8000/api/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_id: username,
+                            password: password
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.message === "登录成功") {
+                        // 登录成功 - 存储用户信息（可选）
+                        if (rememberMe) {
+                            localStorage.setItem('rememberedUser', username);
+                        } else {
+                            localStorage.removeItem('rememberedUser');
+                        }
+
+                        // 存储登录状态（可选）
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('currentUser', username);
+
+                        // 跳转到知识图谱页面
+                        window.location.href = 'Knowledge_Gragh.html';
+                    } else {
+                        // 显示服务器返回的错误信息
+                        const errorMsg = result.error || '登录失败，请重试';
+                        document.getElementById('loginError').textContent = errorMsg;
+                        document.getElementById('loginError').classList.remove('d-none');
+
+                        // 重置按钮状态
+                        submitButton.disabled = false;
+                        submitButton.textContent = '登录';
+                    }
+                } catch (error) {
+                    console.error('登录请求失败:', error);
+                    document.getElementById('loginError').textContent = '网络错误，请检查连接';
+                    document.getElementById('loginError').classList.remove('d-none');
+
+                    // 重置按钮状态
+                    submitButton.disabled = false;
+                    submitButton.textContent = '登录';
+                }
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-    const textLeft = "欢迎来到";
-    const textRight = "知识图谱";
-    const typingLeftElement = document.querySelector('.typing-text-left');
-    const typingRightElement = document.getElementById('typingText');
-
-    // 清空初始内容
-    typingLeftElement.textContent = '';
-    typingRightElement.textContent = '';
-
-    let i = 0;
-    let j = 0;
-
-    function typeWriterLeft() {
-        if (i < textLeft.length) {
-            typingLeftElement.textContent += textLeft.charAt(i);
-            i++;
-            setTimeout(typeWriterLeft, 150);
-        } else {
-            // 第一个词打完后再打第二个词
-            setTimeout(typeWriterRight, 300);
+        // 检查是否有记住的用户名
+        const rememberedUser = localStorage.getItem('rememberedUser');
+        if (rememberedUser) {
+            document.getElementById('loginUsername').value = rememberedUser;
+            document.getElementById('rememberMe').checked = true;
         }
-    }
+    });
 
-    function typeWriterRight() {
-        if (j < textRight.length) {
-            typingRightElement.textContent += textRight.charAt(j);
-            j++;
-            setTimeout(typeWriterRight, 150);
-        }
-    }
-
-    // 延迟1秒后开始打字效果
-    setTimeout(typeWriterLeft, 1000);
-});
-
-});
     </script>
 </body>
 </html>
