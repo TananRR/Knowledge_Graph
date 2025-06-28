@@ -18,5 +18,8 @@ urlpatterns = [
     path('query/user/graph_ids/', get_user_graph_ids, ),
     path('query/user/graphs/', get_graphs_by_user),
     path('query/all/graphs/', get_all_graphs),
-
+    path('login/',login),
+    path('register/',register),
+    path('delete_user/',delete_user),
+    path('change_password/',change_password),
 ]
