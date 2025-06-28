@@ -32,3 +32,6 @@ neo4j-shell:
 # 清理所有容器和数据卷
 clean:
 	docker-compose -p $(PROJECT_NAME) down -v
+
+test:
+	python backend/manage.py test backend.tests
