@@ -31,6 +31,6 @@ def home_view(request):
 urlpatterns = [
     path('', home_view, name='home'),  # 添加根路径
     path('admin/', admin.site.urls),
-    path('api/', include('kgapi.urls')),
+    path('api/', include('backend.kgapi.urls')),
 ]
 
