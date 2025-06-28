@@ -16,7 +16,7 @@
     <div class="auth-container1">
         <div class="auth-card">
             <div class="auth-logo">
-                <img src="https://via.placeholder.com/60x60" alt="系统Logo">
+<!--                <img src="https://via.placeholder.com/60x60" alt="系统Logo">-->
                 <h3>创建新账号</h3>
                 <p class="text-muted">加入知识图谱系统</p>
             </div>
@@ -30,11 +30,6 @@
                     <div class="error-message d-none" id="registerUsernameError"></div>
                 </div>
 
-<!--                <div class="form-group">-->
-<!--                    <label for="registerEmail" class="form-label">邮箱</label>-->
-<!--                    <input type="email" id="registerEmail" class="form-control" placeholder="请输入邮箱" required>-->
-<!--                    <div class="error-message d-none" id="registerEmailError"></div>-->
-<!--                </div>-->
 
                 <div class="form-group">
                     <label for="registerPassword" class="form-label">密码</label>
@@ -71,134 +66,172 @@
 
     <script>
 
-        // 新增垂直打字动画脚本
         document.addEventListener('DOMContentLoaded', function() {
-            const textLeft = "请 您 创 建";
-            const textRight = "新 的 账 号";
-            const typingLeftElement = document.getElementById('typingLeft');
-            const typingRightElement = document.getElementById('typingText');
+    // 垂直打字动画
+    const textLeft = "请 您 创 建";
+    const textRight = "新 的 账 号";
+    const typingLeftElement = document.getElementById('typingLeft');
+    const typingRightElement = document.getElementById('typingText');
 
-            // 垂直打字函数
-            function typeVertical(element, text, speed, callback) {
-                const lines = text.split('\n');
-                let i = 0, j = 0;
+    // 打字动画函数
+    function typeVertical(element, text, speed, callback) {
+        const lines = text.split('\n');
+        let i = 0, j = 0;
 
-                function typeLine() {
+        function typeLine() {
+            if (i < lines.length) {
+                if (j <= lines[i].length) {
+                    element.innerHTML = lines.slice(0, i).join('<br>') +
+                                      '<br>' + lines[i].substring(0, j);
+                    j++;
+                    setTimeout(typeLine, speed);
+                } else {
+                    i++;
+                    j = 0;
+                    element.innerHTML = lines.slice(0, i).join('<br>');
                     if (i < lines.length) {
-                        if (j <= lines[i].length) {
-                            element.innerHTML = lines.slice(0, i).join('<br>') +
-                                              '<br>' + lines[i].substring(0, j);
-                            j++;
-                            setTimeout(typeLine, speed);
-                        } else {
-                            i++;
-                            j = 0;
-                            element.innerHTML = lines.slice(0, i).join('<br>');
-                            if (i < lines.length) {
-                                setTimeout(typeLine, speed * 2);
-                            } else if (callback) {
-                                callback();
-                            }
-                        }
+                        setTimeout(typeLine, speed * 2);
+                    } else if (callback) {
+                        callback();
                     }
                 }
-                typeLine();
             }
+        }
+        typeLine();
+    }
 
-            // 先打左侧文字，再打右侧文字
-            typeVertical(typingLeftElement, textLeft, 150, function() {
-                setTimeout(() => {
-                    typeVertical(typingRightElement, textRight, 150);
-                }, 300);
-            });
-        });
+    // 启动打字动画
+    typeVertical(typingLeftElement, textLeft, 150, function() {
+        setTimeout(() => {
+            typeVertical(typingRightElement, textRight, 150);
+        }, 300);
+    });
 
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+    // 注册表单处理
+    const registerForm = document.getElementById('registerForm');
+    const submitButton = registerForm.querySelector('.auth-btn');
 
-            // 清除错误状态
-            document.getElementById('registerError').classList.add('d-none');
-            document.getElementById('registerUsernameError').classList.add('d-none');
-            document.getElementById('registerEmailError').classList.add('d-none');
-            document.getElementById('registerPasswordError').classList.add('d-none');
-            document.getElementById('registerPasswordConfirmError').classList.add('d-none');
+    registerForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-            const username = document.getElementById('registerUsername').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+        // 清除错误状态
+        document.getElementById('registerError').classList.add('d-none');
+        document.getElementById('registerUsernameError').classList.add('d-none');
+        document.getElementById('registerPasswordError').classList.add('d-none');
+        document.getElementById('registerPasswordConfirmError').classList.add('d-none');
 
-            let isValid = true;
-            const errors = [];
+        // 获取表单数据
+        const username = document.getElementById('registerUsername').value;
+        const password = document.getElementById('registerPassword').value;
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+        const acceptTerms = document.getElementById('acceptTerms').checked;
 
-            if (!username.trim()) {
-                document.getElementById('registerUsernameError').textContent = '请输入用户名';
-                document.getElementById('registerUsernameError').classList.remove('d-none');
-                isValid = false;
-            } else if (username.length > 20) {
-                document.getElementById('registerUsernameError').textContent = '用户名不能超过20个字符';
-                document.getElementById('registerUsernameError').classList.remove('d-none');
-                isValid = false;
-            }
+        // 表单验证标志
+        let isValid = true;
 
-            if (!email) {
-                document.getElementById('registerEmailError').textContent = '请输入邮箱';
-                document.getElementById('registerEmailError').classList.remove('d-none');
-                isValid = false;
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                document.getElementById('registerEmailError').textContent = '请输入有效的邮箱地址';
-                document.getElementById('registerEmailError').classList.remove('d-none');
-                isValid = false;
-            }
+        // 用户名验证
+        if (!username.trim()) {
+            document.getElementById('registerUsernameError').textContent = '请输入用户名';
+            document.getElementById('registerUsernameError').classList.remove('d-none');
+            isValid = false;
+        } else if (username.length > 20) {
+            document.getElementById('registerUsernameError').textContent = '用户名不能超过20个字符';
+            document.getElementById('registerUsernameError').classList.remove('d-none');
+            isValid = false;
+        }
 
-            if (!password) {
-                document.getElementById('registerPasswordError').textContent = '请输入密码';
-                document.getElementById('registerPasswordError').classList.remove('d-none');
-                isValid = false;
-            } else if (password.length < 8) {
-                document.getElementById('registerPasswordError').textContent = '密码长度至少为8位';
-                document.getElementById('registerPasswordError').classList.remove('d-none');
-                isValid = false;
-            } else if (!/[A-Z]/.test(password)) {
-                document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个大写字母';
-                document.getElementById('registerPasswordError').classList.remove('d-none');
-                isValid = false;
-            } else if (!/[0-9]/.test(password)) {
-                document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个数字';
-                document.getElementById('registerPasswordError').classList.remove('d-none');
-                isValid = false;
-            }
+        // 密码验证
+        if (!password) {
+            document.getElementById('registerPasswordError').textContent = '请输入密码';
+            document.getElementById('registerPasswordError').classList.remove('d-none');
+            isValid = false;
+        } else if (password.length < 8) {
+            document.getElementById('registerPasswordError').textContent = '密码长度至少为8位';
+            document.getElementById('registerPasswordError').classList.remove('d-none');
+            isValid = false;
+        } else if (!/[A-Z]/.test(password)) {
+            document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个大写字母';
+            document.getElementById('registerPasswordError').classList.remove('d-none');
+            isValid = false;
+        } else if (!/[0-9]/.test(password)) {
+            document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个数字';
+            document.getElementById('registerPasswordError').classList.remove('d-none');
+            isValid = false;
+        }
 
-            if (!passwordConfirm) {
-                document.getElementById('registerPasswordConfirmError').textContent = '请确认密码';
-                document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
-                isValid = false;
-            } else if (password !== passwordConfirm) {
-                document.getElementById('registerPasswordConfirmError').textContent = '两次输入的密码不一致';
-                document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
-                isValid = false;
-            }
+        // 确认密码验证
+        if (!passwordConfirm) {
+            document.getElementById('registerPasswordConfirmError').textContent = '请确认密码';
+            document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
+            isValid = false;
+        } else if (password !== passwordConfirm) {
+            document.getElementById('registerPasswordConfirmError').textContent = '两次输入的密码不一致';
+            document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
+            isValid = false;
+        }
 
-            if (!document.getElementById('acceptTerms').checked) {
-                errors.push('请接受服务条款和隐私政策');
-                isValid = false;
-            }
+        // 条款同意验证
+        if (!acceptTerms) {
+            document.getElementById('registerError').textContent = '请接受服务条款和隐私政策';
+            document.getElementById('registerError').classList.remove('d-none');
+            isValid = false;
+        }
 
-            if (isValid) {
-                // 模拟注册成功
-                console.log('注册信息:', { username, email, password });
-                // 在实际应用中，这里会发送AJAX请求到后端
-                // 注册成功后跳转到登录页面
-                // window.location.href = 'login.html';
+        // 如果验证通过，发送注册请求
+        if (isValid) {
+            try {
+                // 设置按钮为加载状态
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 注册中...';
 
-                // 模拟注册失败（用于演示）
-                document.getElementById('registerError').textContent = '注册失败，请稍后重试';
+                // 发送注册请求
+                const response = await fetch('http://127.0.0.1:8000/api/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: username,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.message === "注册成功") {
+                    // 注册成功提示
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'alert alert-success text-center';
+                    successMessage.textContent = '注册成功！即将跳转到登录页面...';
+                    registerForm.prepend(successMessage);
+
+                    // 3秒后跳转到登录页面
+                    setTimeout(() => {
+                        // 跳转到index.html（登录页面）并传递注册成功的用户名
+                        window.location.href = `index.html?registered_user=${encodeURIComponent(username)}`;
+                    }, 3000);
+                } else {
+                    // 显示服务器返回的错误信息
+                    const errorMsg = result.error || '注册失败，请重试';
+                    document.getElementById('registerError').textContent = errorMsg;
+                    document.getElementById('registerError').classList.remove('d-none');
+
+                    // 重置按钮状态
+                    submitButton.disabled = false;
+                    submitButton.textContent = '注册';
+                }
+            } catch (error) {
+                console.error('注册请求失败:', error);
+                document.getElementById('registerError').textContent = '网络错误，请检查连接';
                 document.getElementById('registerError').classList.remove('d-none');
-            } else if (errors.length > 0) {
-                document.getElementById('registerError').textContent = errors.join('; ');
-                document.getElementById('registerError').classList.remove('d-none');
+
+                // 重置按钮状态
+                submitButton.disabled = false;
+                submitButton.textContent = '注册';
             }
-        });
+        }
+    });
+});
     </script>
 </body>
 </html>

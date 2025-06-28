@@ -5,6 +5,7 @@ from .export import export_knowledge_graph
 from .extract import extract_text_from_file
 from .delete import delete_all_graphs, delete_graph_by_id, delete_graphs_by_user
 from .query import get_graph_by_id, get_user_graph_ids, get_graphs_by_user, get_all_graphs
+from .login import login,register,delete_user,change_password
 
 
 urlpatterns = [
