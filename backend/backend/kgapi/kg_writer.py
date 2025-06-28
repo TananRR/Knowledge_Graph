@@ -2,7 +2,7 @@ from neo4j import GraphDatabase
 import json
 import re
 
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
+driver = GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "testpassword"))
 
 
 def create_or_update_user_password(session, user_id, password):
