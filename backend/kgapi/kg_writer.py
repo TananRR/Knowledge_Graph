@@ -4,7 +4,7 @@ import re
 import time
 
 # 配置 Neo4j 数据库连接
-driver = GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "testpassword"))
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
 
 
 # 处理非法关系名
@@ -351,7 +351,7 @@ def delete_graph(graph_id):
 # 主函数
 def main():
     user_id = "user_001"  # 模拟当前登录用户
-    file_path = "D:/pyc/task/Knowledge_Graph/backend/kgapi/extracted_result.json"
+    file_path = "D:/AppData/Knowledge_Graph/backend/kgapi/extracted_result.json"
 
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)

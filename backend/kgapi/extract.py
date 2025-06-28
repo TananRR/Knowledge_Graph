@@ -38,7 +38,7 @@ def extract_text_from_file(request):
         user_id = request.POST.get("user_id", "default_user")
 
         create_graph(entities, relations, graph_id, user_id)
-        # data = get_graph_data(graph_id)
+        data = get_graph_data(graph_id)
 
         return JsonResponse({
             "text": text,
