@@ -1,0 +1,213 @@
+
+/* 新增两侧垂直打字样式 */
+.vertical-typing-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none; /* 防止干扰点击 */
+    align-items: center;
+    z-index: 0;
+}
+
+.typing-left, .typing-right {
+    color: white;
+    font-size: 6.5rem;
+    font-weight: 700;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    text-shadow: 0 0 10px rgba(0,0,0,0.3);
+    padding: 20px;
+    opacity: 0.8;
+    line-height: 1.5;
+}
+
+.typing-left {
+    text-align: right;
+    margin-left: 10%;
+}
+
+.typing-right {
+    text-align: left;
+    margin-right: 10%;
+}
+
+/* 认证页面公共样式 */
+.auth-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, #cee3fa, #bdd9f6, #aad0f2, #96c7ee, #81bee9);
+    background-size: cover;
+    padding: 20px;
+}
+.auth-container1 {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, #e0fbe2, #c8f0ca, #b0e5b1, #99da99, #82ce80);    padding: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.auth-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-logo img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e0e0e0;
+}
+
+.auth-logo h3 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.auth-logo p {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-control {
+    height: 50px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 0 15px;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.auth-btn {
+    height: 50px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    transition: all 0.3s;
+    border: none;
+    text-transform: uppercase;
+    width: 280px; /* 自定义宽度 */
+    max-width: 100%;
+}
+
+.btn-primary.auth-btn {
+    background: linear-gradient(to right, #3498db, #2980b9);
+}
+
+.btn-primary.auth-btn:hover {
+    background: linear-gradient(to right, #2980b9, #2573a7);
+    transform: translateY(-2px);
+}
+
+.btn-success.auth-btn {
+    background: linear-gradient(to right, #2ecc71, #27ae60);
+}
+
+.btn-success.auth-btn:hover {
+    background: linear-gradient(to right, #27ae60, #219653);
+    transform: translateY(-2px);
+}
+
+.auth-footer {
+    margin-top: 25px;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.auth-footer a {
+    color: #3498db;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.auth-footer a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: none;
+}
+
+.alert {
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.form-check-input:checked {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.form-check-label {
+    color: #34495e;
+    user-select: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+    .auth-card {
+        padding: 30px 20px;
+    }
+
+    .auth-logo img {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+    .typing-text-left {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
