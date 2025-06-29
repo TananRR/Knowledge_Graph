@@ -1,120 +1,305 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <title>知识图谱可视化演示</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 知识图谱系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="static/css/auth.css">
 
-  <!-- 引入 D3.js -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <!-- 引入 canvg（导出 PNG 用） -->
-  <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.7/lib/umd.min.js"></script>
+    <style>
+        /* 全新设计的极简清新弹窗 */
+        #messageModal .modal-dialog {
+            max-width: 380px;
+        }
+        #messageModal .modal-content {
+            border: none;
+            border-radius: 16px; /* 更大的圆角 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            background: #ffffff;
+        }
+        #messageModal .modal-header {
+            border-bottom: none;
+            padding: 24px 24px 8px;
+            background: transparent;
+        }
+        #messageModal .modal-title {
+            font-weight: 500;
+            color: #333;
+            font-size: 1.1rem;
+            text-align: center;
+            width: 100%;
+        }
+        #messageModal .modal-body {
+            padding: 8px 24px;
+            color: #666;
+            text-align: center;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        #messageModal .modal-footer {
+            border-top: none;
+            padding: 16px 24px 24px;
+            background: transparent;
+            justify-content: center;
+        }
+        #messageModal .btn-close {
+            display: none;
+        }
+        #messageModal .btn-confirm {
+            background: #f0f4ff;
+            border: none;
+            color: #4a6bff;
+            padding: 8px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+        #messageModal .btn-confirm:hover {
+            background: #e0e8ff;
+            transform: translateY(-1px);
+        }
+        #messageModal .btn-confirm:active {
+            transform: translateY(0);
+        }
 
-  <style>
-    html, body {
-      margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: "Microsoft YaHei", sans-serif;
-    }
-    svg {
-      width: 100vw; height: 100vh; display: block;
-    }
-    #search-bar {
-      position: absolute;
-      top: 10px;
-      left: 20px;
-      z-index: 1000;
-      background: rgba(255,255,255,0.95);
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-    #search-bar input, #search-bar button {
-      margin: 5px 5px 5px 0;
-      padding: 5px;
-    }
-    #legend {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 10px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-  </style>
+        /* 添加淡入淡出动画 */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease;
+            transform: translateY(20px) scale(0.98);
+            opacity: 0;
+        }
+        .modal.show .modal-dialog {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    </style>
 </head>
-
 <body>
 
-  <div id="search-bar">
-    <input type="text" id="searchInput" placeholder="请输入关键词" style="width:200px;" />
-    <button onclick="handleSearch()">查询节点</button>
-    <br />
+    <!-- 新增两侧垂直打字动画 -->
+    <div class="vertical-typing-container">
+        <div class="typing-left" id="typingLeft"></div>
+        <div class="typing-right" id="typingText"></div>
+    </div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+<!--                <img src="https://via.placeholder.com/60x60   " alt="系统Logo">-->
+                <h3>知识图谱系统</h3>
+                <p class="text-muted">请登录您的账号</p>
+            </div>
 
-    <input type="file" id="upload-file" accept=".txt,.pdf,.docx" />
-    <button onclick="handleUpload()">上传图谱数据</button>
-    <br />
+            <form id="loginForm">
+                <div class="alert alert-danger d-none" id="loginError">用户名或密码错误</div>
 
-    <button onclick="focusNode()">聚焦实体</button>
-    <button onclick="exportPNG()">导出 PNG</button>
-    <button onclick="exportJSON()">导出 JSON</button>
-  </div>
+                <div class="form-group">
+                    <label for="loginUsername" class="form-label">用户名</label>
+                    <input type="text" id="loginUsername" class="form-control" placeholder="请输入用户名" required>
+                    <div class="error-message d-none" id="usernameError"></div>
+                </div>
 
-  <svg></svg>
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">密码</label>
+                   <input type="password" id="loginPassword" class="form-control" placeholder="请输入密码" required minlength="8">
+                    <div class="error-message d-none" id="passwordError"></div>
+                </div>
 
-  <div id="legend">
-    <strong>实体类型图例</strong>
-    <div><span style="display:inline-block;width:12px;height:12px;background:#1f77b4;margin-right:5px;"></span>Person</div>
-    <div><span style="display:inline-block;width:12px;height:12px;background:#ff7f0e;margin-right:5px;"></span>Organization</div>
-  </div>
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">记住我</label>
+                </div>
+
+               <!-- 在 Kowledge_Graph.html 和 register.html 中找到按钮部分 -->
+                <div class="text-center">  <!-- 添加这行 -->
+                     <button type="submit" class="btn btn-primary auth-btn">登录</button>
+                </div>
+
+                <div class="auth-footer">
+                    <p class="text-center mt-3">
+                        <a href="#" class="text-decoration-none">忘记密码?</a>
+                        <span class="mx-2">|</span>
+                        <a href="register.html" class="text-decoration-none">注册新账号</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
-<!-- ✅ 添加这段 -->
-<script src="./js/graph.js"></script>
-<script type="module">
-  import { uploadTextFile, searchNodes } from './js/api.js';
+    <script>
 
-  window.handleUpload = async function () {
-    const input = document.getElementById("upload-file");
-    const file = input.files[0];
-    if (!file) {
-      alert("请先选择文件！");
-      return;
-    }
+        document.addEventListener('DOMContentLoaded', function() {
+        // 初始化弹窗
+const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
 
-    try {
-      const result = await uploadTextFile(file);
-      if (result.code === 0) {
-        alert("上传并更新成功！");
-        // 若需刷新图谱数据，可以调用 loadGraph()
-        loadGraph();
-      } else {
-        alert("失败：" + result.msg);
-      }
-    } catch (err) {
-      alert("请求失败，请检查后端服务");
-      console.error(err);
-    }
-  };
+// 显示消息的函数
+function showMessage(title, message) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    messageModal.show();
+}
 
-  window.handleSearch = async function () {
-    const keyword = document.getElementById("searchInput").value.trim();
-    if (!keyword) {
-      alert("请输入关键词！");
-      return;
-    }
+        // 垂直打字动画
+        const textLeft = "欢 迎 来 到";
+        const textRight = "知 识 图 谱";
+        const typingLeftElement = document.getElementById('typingLeft');
+        const typingRightElement = document.getElementById('typingText');
 
-    try {
-      const results = await searchNodes(keyword);
-      console.log("查询结果：", results);
-      // 如果你想用返回结果聚焦某个节点，可以提取 name 然后设置搜索框再调用 focusNode()
-      // 比如：document.getElementById("searchInput").value = results[0].name; focusNode();
-    } catch (err) {
-      alert("查询失败！");
-      console.error(err);
-    }
-  };
-</script>
+        function typeVertical(element, text, speed, callback) {
+            const lines = text.split('\n');
+            let i = 0, j = 0;
 
+            function typeLine() {
+                if (i < lines.length) {
+                    if (j <= lines[i].length) {
+                        element.innerHTML = lines.slice(0, i).join('<br>') +
+                                          '<br>' + lines[i].substring(0, j);
+                        j++;
+                        setTimeout(typeLine, speed);
+                    } else {
+                        i++;
+                        j = 0;
+                        element.innerHTML = lines.slice(0, i).join('<br>');
+                        if (i < lines.length) {
+                            setTimeout(typeLine, speed * 2);
+                        } else if (callback) {
+                            callback();
+                        }
+                    }
+                }
+            }
+            typeLine();
+        }
+
+        // 先打左侧文字，再打右侧文字
+        typeVertical(typingLeftElement, textLeft, 150, function() {
+            setTimeout(() => {
+                typeVertical(typingRightElement, textRight, 150);
+            }, 300);
+        });
+
+        // 登录表单处理
+        const loginForm = document.getElementById('loginForm');
+        const submitButton = loginForm.querySelector('.auth-btn');
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 清除错误状态
+            document.getElementById('loginError').classList.add('d-none');
+            document.getElementById('usernameError').classList.add('d-none');
+            document.getElementById('passwordError').classList.add('d-none');
+
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            let isValid = true;
+
+            // 用户名验证
+            if (!username.trim()) {
+                document.getElementById('usernameError').textContent = '请输入用户名';
+                document.getElementById('usernameError').classList.remove('d-none');
+                isValid = false;
+            }
+
+            // 密码验证
+            // 密码验证
+if (!password) {
+    showMessage('提示', '请输入密码');
+    isValid = false;
+} else if (password.length < 6) {
+    showMessage('提示', '密码长度至少为6位');
+    isValid = false;
+}
+
+
+            // 如果验证通过，发送登录请求
+            if (isValid) {
+                try {
+                    // 设置按钮为加载状态
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 登录中...';
+
+                    // 发送登录请求
+                    const response = await fetch('http://127.0.0.1:8000/api/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_id: username,
+                            password: password
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.message === "登录成功") {
+                        // 登录成功 - 存储用户信息（可选）
+                        if (rememberMe) {
+                            localStorage.setItem('rememberedUser', username);
+                        } else {
+                            localStorage.removeItem('rememberedUser');
+                        }
+
+                        // 存储登录状态（可选）
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('currentUser', username);
+
+                        // 跳转到知识图谱页面
+                        window.location.href = 'knowledge_graph.html';
+                    } else {
+                        // 显示服务器返回的错误信息
+                        const errorMsg = result.error || '登录失败，请重试';
+                        document.getElementById('loginError').textContent = errorMsg;
+                        document.getElementById('loginError').classList.remove('d-none');
+
+                        // 重置按钮状态
+                        submitButton.disabled = false;
+                        submitButton.textContent = '登录';
+                    }
+                } catch (error) {
+                    console.error('登录请求失败:', error);
+                    document.getElementById('loginError').textContent = '网络错误，请检查连接';
+                    document.getElementById('loginError').classList.remove('d-none');
+
+                    // 重置按钮状态
+                    submitButton.disabled = false;
+                    submitButton.textContent = '登录';
+                }
+            }
+        });
+
+        // 检查是否有记住的用户名
+        const rememberedUser = localStorage.getItem('rememberedUser');
+        if (rememberedUser) {
+            document.getElementById('loginUsername').value = rememberedUser;
+            document.getElementById('rememberMe').checked = true;
+        }
+    });
+
+    </script>
+<!-- 极简白色弹窗 -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="modalTitle">提示</h6>
+            </div>
+            <div class="modal-body" id="modalMessage">
+                <!-- 消息内容将在这里显示 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-confirm" data-bs-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

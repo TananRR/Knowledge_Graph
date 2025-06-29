@@ -25,11 +25,12 @@ def home_view(request):
         <h1>知识图谱后台服务</h1>
         <p>API 端点：<a href="/api/search/">/api/search/?q=关键词</a></p>
         <p>管理后台：<a href="/admin/">/admin/</a></p>
+        <button onclick="handleDeleteByUser">删除用户_id图谱</button>
     """)
 
 urlpatterns = [
     path('', home_view, name='home'),  # 添加根路径
     path('admin/', admin.site.urls),
-    path('api/', include('kgapi.urls')),
+    path('api/', include('backend.kgapi.urls')),
 ]
 
