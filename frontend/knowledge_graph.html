@@ -593,6 +593,8 @@ input:focus, select:focus {
 
   <script type="module" src="./js/graph.js"></script>
  <script>
+   const userId = sessionStorage.getItem('currentUser') || 'default_user';
+console.log("当前用户:", userId);
     document.getElementById("upload-file").addEventListener("change", function () {
     const fileName = this.files[0]?.name || "未选择文件";
     document.getElementById("file-name").textContent = fileName;

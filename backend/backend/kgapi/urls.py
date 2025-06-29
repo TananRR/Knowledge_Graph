@@ -10,13 +10,13 @@ from .login import login,register,delete_user,change_password
 
 urlpatterns = [
     path('search/', search_entity),  # 确保这个路径存在
-    path('upload/', export_knowledge_graph),
+    path('export/', export_knowledge_graph),
     path('extract/', extract_text_from_file),
     path('delete/all/', delete_all_graphs),
     path('delete/graph/', delete_graph_by_id),
     path('delete/user/', delete_graphs_by_user),
     path('query/graph/', get_graph_by_id),
-    path('query/user/graph_ids/', get_user_graph_ids, ),
+    path('query/user/graph_ids/', get_user_graph_ids ),
     path('query/user/graphs/', get_graphs_by_user),
     path('query/all/graphs/', get_all_graphs),
     path('login/',login),

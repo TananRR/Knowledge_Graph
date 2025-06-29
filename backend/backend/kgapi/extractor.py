@@ -3,6 +3,7 @@ import spacy
 from spacy.matcher import Matcher
 import json
 
+
 try:
     nlp = spacy.load("zh_core_web_md")
 except OSError:

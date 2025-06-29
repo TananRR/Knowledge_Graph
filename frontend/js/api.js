@@ -21,20 +21,21 @@ export async function searchNodes(keyword) {
   return data.results || [];
 }
 
-// ✅ 上传文本文件（触发抽取与图谱构建）
-export async function uploadTextFile(file) {
+export async function uploadTextFile(file, userId) {
   if (!file) throw new Error("未选择文件");
 
   const formData = new FormData();
   formData.append("file", file);
-
+  formData.append("user_id", userId); // 传递用户ID
+  console.log([...formData.entries()]); // 这行可以打印出所有formData里的字段，调试用
   const resp = await fetch(`${BASE_URL}/extract/`, {
     method: "POST",
     body: formData
   });
 
-  return handleResponse(resp); // 返回含 text, entities, relations, graph_id 等
+  return handleResponse(resp);
 }
+
 
 // ✅ 查询指定图谱数据（graph_id）
 export async function fetchGraphData(graphId) {
@@ -92,7 +93,7 @@ export async function deleteGraphsByUser(userId) {
 export async function downloadGraphJSON(graphId) {
   if (!graphId) throw new Error("缺少 graphId");
 
-  const resp = await fetch(`${BASE_URL}/export/${graphId}`);
+  const resp = await fetch(`${BASE_URL}/export/?graph_id=${encodeURIComponent(graphId)}`);
   const json = await handleResponse(resp);
 
   const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
