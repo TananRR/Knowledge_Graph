@@ -484,6 +484,30 @@ export function exportSVG(includeStyles = true) {
   }
 }
 
+export async function loadGraphList(userId) {
+  const select = document.getElementById("graphSelect");
+  select.innerHTML = '<option value="">选择要加载的图谱</option>';
+
+  try {
+    const data = await fetchUserGraphIds(userId);
+    const graphIds = data.graph_ids || [];
+
+    graphIds.forEach(id => {
+      const option = document.createElement("option");
+      option.value = id;
+      option.text = id;
+      select.appendChild(option);
+    });
+
+    console.log("已刷新图谱下拉列表：", graphIds);
+    return graphIds;  // ✅ 加上 return
+
+  } catch (err) {
+    console.error("加载用户图谱列表失败：", err);
+    alert("加载用户图谱列表失败！");
+    return []; // 遇到异常时返回空数组，避免 undefined
+  }
+}
 
 window.handleUpload = async function () {
   const input = document.getElementById("upload-file");
@@ -495,8 +519,10 @@ window.handleUpload = async function () {
     return;
   }
 
+  const userId = sessionStorage.getItem('currentUser') || "default_user";
+
   try {
-    const result = await uploadTextFile(file);
+    const result = await uploadTextFile(file,userId);
     if (result.graph_id) {
       alert("上传并更新成功！");
       currentGraphId = result.graph_id;
@@ -505,6 +531,13 @@ window.handleUpload = async function () {
       // 清除文件选择和显示
       input.value = ""; // 重置文件输入框
       fileNameDisplay.textContent = ""; // 清空文件名显示
+
+      // ✅ 上传成功后，刷新图谱下拉列表
+      await loadGraphList(userId);
+
+      // ✅ 重新选中当前图谱
+      const select = document.getElementById("graphSelect");
+      select.value = currentGraphId;
 
       try {
         const graphData = await fetchGraphData(currentGraphId);
@@ -522,7 +555,6 @@ window.handleUpload = async function () {
     console.error("上传失败：", err);
   }
 };
-
 
 // 删除全部图谱
 window.handleDeleteAll = async function () {
@@ -740,12 +772,12 @@ window.exportSVG = async function() {
   }
 };
 
-
 // 页面加载时调用
 window.onload = async function () {
+  const userId = sessionStorage.getItem('currentUser') || "default_user";
+
   try {
-    const data = await fetchUserGraphIds("default_user");
-    const graphIds = data.graph_ids || [];
+    const graphIds = await loadGraphList(userId);
 
     if (!graphIds.length) {
       d3.select("svg").selectAll("*").remove();
@@ -759,18 +791,11 @@ window.onload = async function () {
       return;
     }
 
-    // ✅ 动态填充下拉框
-    const select = document.getElementById("graphSelect");
-    graphIds.forEach(id => {
-      const option = document.createElement("option");
-      option.value = id;
-      option.text = id;
-      select.appendChild(option);
-    });
-
     // 默认选中最后一个并加载
+    const select = document.getElementById("graphSelect");
     select.value = graphIds[graphIds.length - 1];
     currentGraphId = select.value;
+
     const graphData = await fetchGraphData(currentGraphId);
     renderGraph(graphData);
 
@@ -779,6 +804,7 @@ window.onload = async function () {
     console.error(err);
   }
 };
+
 
 // 用户手动选择后点击加载
 window.loadSelectedGraph = async function () {

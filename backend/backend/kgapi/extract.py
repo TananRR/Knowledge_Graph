@@ -35,7 +35,11 @@ def extract_text_from_file(request):
         relations = kg_result["relations"]
 
         graph_id = time.strftime("graph_%Y%m%d%H%M%S")
+
+        print("request.POST:", request.POST)
+        print("request.FILES:", request.FILES)
         user_id = request.POST.get("user_id", "default_user")
+        print("接收到的user_id:", user_id)
 
         create_graph(entities, relations, graph_id, user_id)
 
