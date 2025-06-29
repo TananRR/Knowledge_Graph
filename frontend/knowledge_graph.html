@@ -5,7 +5,8 @@
   <title>知识图谱可视化演示</title>
   <!-- 引入 D3.js -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
-
+<!-- 在 HTML 的 <head> 或 <body> 尾部加上 -->
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- 引入 Font Awesome 图标 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- 引入 particles.js -->
@@ -550,8 +551,8 @@ body.dark-theme .tab-button.active {
         <button onclick="loadSelectedGraph()"><i class="fas fa-sync"></i> 加载图谱</button>
       </div>
       <div class="toolbar-section">
-        <button class="danger" onclick="handleDeleteAll()"><i class="fas fa-trash-alt"></i> 删除全部图谱</button>
         <button class="danger" onclick="handleDeleteGraph()"><i class="fas fa-trash"></i> 删除当前图谱</button>
+        <button class="danger" onclick="handleDeleteByUser()"><i class="fas fa-trash-alt"></i> 删除全部图谱</button>
       </div>
     </div>
     
@@ -578,8 +579,6 @@ body.dark-theme .tab-button.active {
 
   </div>
 </div>
-
-
 
  <!-- 导出下拉菜单 -->
   <div class="export-dropdown">
