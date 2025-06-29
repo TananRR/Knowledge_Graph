@@ -63,7 +63,6 @@ def get_all_graphs(request):
     try:
         with driver.session() as session:
             all_graphs_data = query_all_graphs(session)
-
         return JsonResponse(all_graphs_data, safe=False)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

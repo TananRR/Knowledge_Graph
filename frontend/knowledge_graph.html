@@ -545,7 +545,7 @@ body.dark-theme .tab-button.active {
       <div class="toolbar-section">
         <div class="section-title"><i class="fas fa-network-wired"></i> 图谱管理</div>
         <select id="graphSelect">
-          <option value="">选择要加载的图谱</option>
+           <option value="" disabled hidden selected>请选择要加载的图谱</option>
         </select>
         <button onclick="loadSelectedGraph()"><i class="fas fa-sync"></i> 加载图谱</button>
       </div>
@@ -649,12 +649,20 @@ body.dark-theme .tab-button.active {
 
   <script type="module" src="./js/graph.js"></script>
  <script>
-   const userId = sessionStorage.getItem('currentUser') || 'default_user';
+    const userId = sessionStorage.getItem('currentUser') || 'default_user';
     console.log("当前用户:", userId);
     document.getElementById("upload-file").addEventListener("change", function () {
     const fileName = this.files[0]?.name || "未选择文件";
     document.getElementById("file-name").textContent = fileName;
   });
+
+  document.getElementById("graphSelect").addEventListener("change", function() {
+  if (this.value !== "") {
+    // 用户选择了有效图谱，移除提示文字
+    this.querySelector("option[value='']").disabled = true;
+  }
+});
+
     // 导出菜单切换函数
     function toggleExportMenu() {
       const exportOptions = document.getElementById('exportOptions');
@@ -668,7 +676,6 @@ body.dark-theme .tab-button.active {
         }
       });
     }
-
 
     // 工具提示函数
     function showTooltip(message, duration) {
@@ -712,7 +719,7 @@ body.dark-theme .tab-button.active {
     });
   });
 
-     particlesJS("particles-js", {
+  particlesJS("particles-js", {
     particles: {
       number: {
         value: 80,
