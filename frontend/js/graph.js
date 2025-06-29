@@ -358,6 +358,7 @@ export function focusNode() {
 
 export async function loadGraphList(userId) {
   const select = document.getElementById("graphSelect");
+select.innerHTML = "";  // 清空之前的选项
 
   try {
     const data = await fetchUserGraphIds(userId);
@@ -438,6 +439,7 @@ window.handleUpload = async function () {
 
 // 删除当前子图
 window.handleDeleteGraph = async function () {
+const userId = sessionStorage.getItem('currentUser') || "default_user";
  if (!currentGraphId) {
   Swal.fire({ icon: 'warning', title: '当前没有选中的图谱！' });
   return;
@@ -451,11 +453,13 @@ Swal.fire({
 }).then((res) => {
   if (!res.isConfirmed) return;
   deleteGraphById(currentGraphId)
-    .then(result => {
+    .then(async result => {
       Swal.fire({ icon: 'success', title: '图谱删除成功', text: result.message });
       d3.select("svg").selectAll("*").remove();
       currentData = null;
       currentGraphId = null;
+      // ✅ 删除成功后，刷新图谱下拉列表
+      await loadGraphList(userId);
     })
     .catch(err => {
       Swal.fire({ icon: 'error', title: '删除失败！' });
@@ -494,6 +498,8 @@ Swal.fire({
       d3.select("svg").selectAll("*").remove();
       currentData = null;
       currentGraphId = null;
+        // ✅ 删除成功后，刷新图谱下拉列表
+      await loadGraphList(userId);
     } catch (err) {
       await Swal.fire({
         title: '删除失败',
