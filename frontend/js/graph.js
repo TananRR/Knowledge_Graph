@@ -100,15 +100,16 @@ if (!graphData || !graphData.nodes || !graphData.links) {
   currentData = graphData;
 
   // 创建力导向图模拟
-  const simulation = d3.forceSimulation(graphData.nodes)
-    .force("link", d3.forceLink(graphData.links)
-      .id(d => d.id)
-      .distance(130)
-      .strength(0.8))
-    .force("charge", d3.forceManyBody().strength(-130))
-    .force("collide", d3.forceCollide().radius(35).strength(0.7))
-    .force("center", d3.forceCenter(width / 2, height / 2))
-    .alphaDecay(0.05);
+ const simulation = d3.forceSimulation(graphData.nodes)
+  .force("link", d3.forceLink(graphData.links)
+    .id(d => d.id)
+    .distance(50)
+    .strength(1.1))
+  .force("charge", d3.forceManyBody().strength(-50))
+  .force("collide", d3.forceCollide().radius(50).strength(1.1))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .alphaDecay(0.03);
+
 
   simulationRef = simulation;
 
@@ -130,7 +131,7 @@ const link = container.append("g")
     .data(graphData.links)
     .enter()
     .append("text")
-    .text(d => d.type)
+    .text(d => d.label)
     .attr("font-size", 10)
     .attr("fill", "#666");
   // 画节点圆圈
