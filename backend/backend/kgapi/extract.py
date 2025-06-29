@@ -5,7 +5,7 @@ from docx import Document
 import fitz  # PyMuPDF
 import pdfplumber
 from .extractor import extract_knowledge  # 🔗 加入这一行
-from .kg_writer import create_graph,get_graph_data
+from .kg_writer import create_graph
 import time
 
 
@@ -35,10 +35,14 @@ def extract_text_from_file(request):
         relations = kg_result["relations"]
 
         graph_id = time.strftime("graph_%Y%m%d%H%M%S")
+
+        print("request.POST:", request.POST)
+        print("request.FILES:", request.FILES)
         user_id = request.POST.get("user_id", "default_user")
+        print("接收到的user_id:", user_id)
 
         create_graph(entities, relations, graph_id, user_id)
-        data = get_graph_data(graph_id)
+
 
         return JsonResponse({
             "text": text,
@@ -46,8 +50,6 @@ def extract_text_from_file(request):
             "relations": kg_result["relations"],
             "message": "构建成功",
             "graph_id": graph_id,
-            # "nodes": data.get("nodes", data.get("entities", [])),
-            # "links": data.get("links", data.get("relations", []))
         }, status=200)
 
     except Exception as e:
