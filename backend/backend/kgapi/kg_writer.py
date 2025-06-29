@@ -4,7 +4,7 @@ import re
 import time
 
 # 配置 Neo4j 数据库连接
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "testpassword"))
+driver = GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "testpassword"))
 
 
 # 处理非法关系名
