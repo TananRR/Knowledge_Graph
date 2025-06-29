@@ -25,7 +25,6 @@ const colorMap = {
 
 // 默认颜色（未匹配类型时使用）
 const defaultColor = "#64748b";
-
 export function renderGraph(graphData) {
   d3.select("svg").selectAll("*").remove();
 
@@ -201,7 +200,12 @@ const label = container.append("g")
 
   // 交互事件
   node.on("click", (event, d) => {
-    alert(`实体名称：${d.name}\n类型：${d.type}\nID：${d.id}`);
+    Swal.fire({
+    title: `实体：${d.name}`,
+    html: `<b>类型：</b>${d.type}<br><b>ID：</b>${d.id}`,
+    icon: 'info',
+    confirmButtonText: '关闭'
+  });
   });
 
   node
@@ -258,7 +262,12 @@ export function focusNode() {
 
   const match = currentData.nodes.find(n => n.name.includes(keyword));
   if (!match) {
-    alert("未找到实体：" + keyword);
+     Swal.fire({
+    icon: 'warning',
+    title: '未找到实体',
+    text: `关键词：${keyword}`,
+    confirmButtonText: '确定'
+  });
     return;
   }
 
@@ -347,144 +356,6 @@ export function focusNode() {
 
 }
 
-//export function cancelFocus() {
-//  if (!currentData || !simulationRef || !nodeRef || !linkRef) return;
-//
-//  // 重置所有节点和连线样式
-//  nodeRef
-//    .attr("stroke", "none")
-//    .attr("stroke-width", 1)
-//    .attr("fill", d => d.highlight ? "#1f77b4" : (d.type === "Person" ? "#1f77b4" : "#ff7f0e"));
-//
-//  linkRef
-//    .attr("stroke", "#aaa")
-//    .attr("stroke-width", 1.5);
-//
-//  // 重置高亮标记
-//  if (currentData.nodes) {
-//    currentData.nodes.forEach(entity => {
-//      entity.highlight = false;
-//    });
-//  }
-//
-//  // 重置模拟
-//  simulationRef.alpha(0.1).restart();
-//
-//  // 重置缩放
-//  svgRef.transition()
-//    .duration(750)
-//    .call(zoomBehavior.transform, d3.zoomIdentity);
-//}
-
-/**
- * 将当前知识图谱导出为PNG图片
- * @param {number} [scale=2] - 导出缩放因子，提高可提高清晰度
- * @param {string} [bgColor='white'] - 背景颜色
- */
-export async function exportPNG(scale = 2, bgColor = 'white') {
-  try {
-    // 获取并克隆SVG元素
-    const svgElement = document.querySelector("svg");
-    const clonedSvg = svgElement.cloneNode(true);
-
-    // 序列化SVG
-    const serializer = new XMLSerializer();
-    let svgString = serializer.serializeToString(clonedSvg);
-
-    // 计算边界和尺寸
-    const svgGroup = clonedSvg.querySelector("g");
-    const bbox = svgGroup.getBBox();
-    const padding = 50;
-    const width = Math.ceil(bbox.width + padding * 2);
-    const height = Math.ceil(bbox.height + padding * 2);
-
-    // 创建画布
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext("2d");
-
-    // 绘制背景
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 调整SVG位置
-    const translatedSvgString = svgString.replace(
-      '<g>',
-      `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
-    );
-
-    // 渲染SVG到画布
-    const v = await canvg.Canvg.fromString(ctx, translatedSvgString, {
-      ignoreDimensions: true,
-      ignoreClear: true,
-      scaleWidth: canvas.width,
-      scaleHeight: canvas.height,
-      ignoreMouse: true,
-      ignoreAnimation: true
-    });
-    await v.render();
-
-    // 触发下载
-    const link = document.createElement("a");
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.download = `knowledge-graph-${timestamp}.png`;
-    link.href = canvas.toDataURL("image/png", 1.0);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch (error) {
-    console.error("PNG导出失败:", error);
-    alert(`PNG导出失败: ${error.message}`);
-  }
-}
-
-/**
- * 将当前知识图谱导出为SVG矢量图
- * @param {boolean} [includeStyles=true] - 是否包含内联样式
- */
-export function exportSVG(includeStyles = true) {
-  try {
-    const svgElement = document.querySelector("svg");
-    const clonedSvg = svgElement.cloneNode(true);
-
-    // 可选：移除交互元素
-    clonedSvg.querySelectorAll('[event-listener]').forEach(el => {
-      el.removeAttribute('event-listener');
-    });
-
-    // 序列化SVG
-    const serializer = new XMLSerializer();
-    let svgString = serializer.serializeToString(clonedSvg);
-
-    // 优化SVG字符串
-    if (!includeStyles) {
-      svgString = svgString.replace(/<style.*?<\/style>/gs, '');
-    }
-
-    // 创建下载
-    const blob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.download = `knowledge-graph-${timestamp}.svg`;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-
-    // 清理
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-  } catch (error) {
-    console.error("SVG导出失败:", error);
-    alert(`SVG导出失败: ${error.message}`);
-  }
-}
-
 export async function loadGraphList(userId) {
   const select = document.getElementById("graphSelect");
 
@@ -518,15 +389,13 @@ export async function loadGraphList(userId) {
   }
 }
 
-
-
 window.handleUpload = async function () {
   const input = document.getElementById("upload-file");
   const file = input.files[0];
   const fileNameDisplay = document.getElementById("file-name"); // 获取文件名显示元素
 
   if (!file) {
-    alert("请先选择文件！");
+     Swal.fire({ icon: 'warning', title: '请先选择文件！' });
     return;
   }
 
@@ -535,7 +404,7 @@ window.handleUpload = async function () {
   try {
     const result = await uploadTextFile(file,userId);
     if (result.graph_id) {
-      alert("上传并更新成功！");
+      Swal.fire({ icon: 'success', title: '上传并更新成功！' });
       currentGraphId = result.graph_id;
       document.querySelector("button[onclick='handleSearch()']").disabled = false;
 
@@ -559,78 +428,96 @@ window.handleUpload = async function () {
         console.error("渲染失败：", err2);
       }
     } else {
-      alert("上传失败：" + (result.msg || "未知错误"));
+      Swal.fire({ icon: 'error', title: '上传失败', text: result.msg || '未知错误' });
     }
   } catch (err) {
-    alert("上传请求失败，请检查后端服务");
+     Swal.fire({ icon: 'error', title: '上传请求失败', text: '请检查后端服务' });
     console.error("上传失败：", err);
-  }
-};
-
-// 删除全部图谱
-window.handleDeleteAll = async function () {
-  if (!confirm("确定删除所有图谱吗？此操作不可恢复！")) return;
-
-  try {
-    const result = await deleteAllGraphs(); // 调用接口
-    alert(result.message || "所有图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败，请检查后端服务");
-    console.error(err);
   }
 };
 
 // 删除当前子图
 window.handleDeleteGraph = async function () {
-  if (!currentGraphId) return alert("当前没有选中的图谱！");
-  if (!confirm(`确定删除图谱 ${currentGraphId} 吗？`)) return;
+ if (!currentGraphId) {
+  Swal.fire({ icon: 'warning', title: '当前没有选中的图谱！' });
+  return;
+}
+Swal.fire({
+  title: `确定删除图谱 ${currentGraphId} 吗？`,
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonText: '确定',
+  cancelButtonText: '取消'
+}).then((res) => {
+  if (!res.isConfirmed) return;
+  deleteGraphById(currentGraphId)
+    .then(result => {
+      Swal.fire({ icon: 'success', title: '图谱删除成功', text: result.message });
+      d3.select("svg").selectAll("*").remove();
+      currentData = null;
+      currentGraphId = null;
+    })
+    .catch(err => {
+      Swal.fire({ icon: 'error', title: '删除失败！' });
+      console.error(err);
+    });
+});
 
-  try {
-    const result = await deleteGraphById(currentGraphId);
-    alert(result.message || "图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败！");
-    console.error(err);
-  }
 };
 
 // 删除指定用户图谱（你可以通过 prompt 让用户输入 user_id）
 window.handleDeleteByUser = async function () {
-  const userId = prompt("请输入要删除的用户 ID：");
-  if (!userId) return;
+const userId = sessionStorage.getItem('currentUser') || "default_user";
+if (!userId) return;
 
-  if (!confirm(`确定删除用户 ${userId} 的所有图谱吗？`)) return;
+// 使用 SweetAlert 弹出确认框
+Swal.fire({
+  title: '确认删除？',
+  text: '确定删除所有图谱吗？此操作无法撤销！',
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#d33',
+  cancelButtonColor: '#00a8e6',
+  confirmButtonText: '是的，删除',
+  cancelButtonText: '取消'
+}).then(async (result) => {
+  if (result.isConfirmed) {
+    try {
+      const res = await deleteGraphsByUser(userId);
+      await Swal.fire({
+        title: '删除成功',
+        text: res.message || "用户图谱已成功删除",
+        icon: 'success',
+        confirmButtonText: '确定'
+      });
 
-  try {
-    const result = await deleteGraphsByUser(userId);
-    alert(result.message || "用户图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败！");
-    console.error(err);
+      d3.select("svg").selectAll("*").remove();
+      currentData = null;
+      currentGraphId = null;
+    } catch (err) {
+      await Swal.fire({
+        title: '删除失败',
+        text: '发生错误，请稍后再试',
+        icon: 'error',
+        confirmButtonText: '确定'
+      });
+      console.error(err);
+    }
   }
+});
 };
-
 
 window.handleSearch = async function () {
   const keyword = document.getElementById("searchInput").value.trim();
   if (!keyword) {
-    alert("请输入关键词！");
+    Swal.fire({ icon: 'warning', title: '请输入关键词！' });
     return;
   }
 
   try {
     const results = await searchNodes(keyword);
     if (!results.length) {
-      alert("未找到相关实体！");
+      Swal.fire({ icon: 'info', title: '未找到相关实体！' });
       return;
     }
 
@@ -648,23 +535,25 @@ window.handleSearch = async function () {
       // 如果有匹配结果，聚焦到第一个匹配节点
       document.getElementById("searchInput").value = results[0].name;
       focusNode();
+      document.getElementById("searchInput").value = "";
+
     }
 
   } catch (err) {
-    alert("查询失败！");
+    Swal.fire({ icon: 'error', title: '查询失败！' });
     console.error(err);
   }
 };
 
 window.exportJSON = async function() {
   if (!currentGraphId) {
-    alert("没有可导出的图谱");
+    Swal.fire({ icon: 'warning', title: '没有可导出的图谱' });
     return;
   }
   try {
     await downloadGraphJSON(currentGraphId);
   } catch (e) {
-    alert("导出失败");
+   Swal.fire({ icon: 'error', title: '导出失败' });
     console.error(e);
   }
 };
@@ -731,11 +620,10 @@ window.exportPNG = async function() {
     document.body.removeChild(link);
 
   } catch (error) {
-    console.error("PNG导出失败:", error);
+    Swal.fire({ icon: 'error', title: '导出失败' });
     alert(`导出失败: ${error.message}`);
   }
 }
-
 
 window.exportSVG = async function() {
   try {
@@ -779,7 +667,7 @@ window.exportSVG = async function() {
 
   } catch (error) {
     console.error("导出SVG失败:", error);
-    alert(`导出SVG失败: ${error.message}`);
+    Swal.fire({ icon: 'error', title: '导出失败' });
   }
 };
 
@@ -811,11 +699,10 @@ window.onload = async function () {
     renderGraph(graphData);
 
   } catch (err) {
-    alert("图谱数据加载失败！");
+     Swal.fire({ icon: 'error', title: '图谱数据加载失败！' });
     console.error(err);
   }
 };
-
 
 // 用户手动选择后点击加载
 window.loadSelectedGraph = async function () {
@@ -866,7 +753,11 @@ window.loadSelectedGraph = async function () {
       renderGraph(graphData);
     }
   } catch (err) {
-    alert("图谱加载失败！");
+ Swal.fire({
+  icon: 'error',
+  title: '图谱加载失败',
+  text: error.message
+});
     console.error(err);
   }
 };
