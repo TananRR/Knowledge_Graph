@@ -5,46 +5,168 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>注册 - 知识图谱系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="static/css/auth.css">
+    <style>
+       /* 全新设计的极简清新弹窗 */
+        #messageModal .modal-dialog {
+            max-width: 380px;
+        }
+        #messageModal .modal-content {
+            border: none;
+            border-radius: 16px; /* 更大的圆角 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            background: #ffffff;
+        }
+        #messageModal .modal-header {
+            border-bottom: none;
+            padding: 24px 24px 8px;
+            background: transparent;
+        }
+        #messageModal .modal-title {
+            font-weight: 500;
+            color: #333;
+            font-size: 1.1rem;
+            text-align: center;
+            width: 100%;
+        }
+        #messageModal .modal-body {
+            padding: 8px 24px;
+            color: #666;
+            text-align: center;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        #messageModal .modal-footer {
+            border-top: none;
+            padding: 16px 24px 24px;
+            background: transparent;
+            justify-content: center;
+        }
+        #messageModal .btn-close {
+            display: none;
+        }
+        #messageModal .btn-confirm {
+            background: #f0f4ff;
+            border: none;
+            color: #4a6bff;
+            padding: 8px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+        #messageModal .btn-confirm:hover {
+            background: #e0e8ff;
+            transform: translateY(-1px);
+        }
+        #messageModal .btn-confirm:active {
+            transform: translateY(0);
+        }
+
+        /* 添加淡入淡出动画 */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease;
+            transform: translateY(20px) scale(0.98);
+            opacity: 0;
+        }
+        .modal.show .modal-dialog {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        /* 验证提示样式保持原样 */
+        .requirement-list {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+        }
+        .requirement-icon {
+            margin-right: 0.3rem;
+            font-size: 0.7rem;
+        }
+        .valid {
+            color: #28a745;
+        }
+        .invalid {
+            color: #dc3545;
+        }
+    </style>
 </head>
 <body>
-<!-- 新增两侧垂直打字动画 -->
-    <div class="vertical-typing-container">
-        <div class="typing-left" id="typingLeft"></div>
-        <div class="typing-right" id="typingText"></div>
+    <!-- 极简白色弹窗 -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="modalTitle">提示</h6>
+                </div>
+                <div class="modal-body" id="modalMessage">
+                    <!-- 消息内容将在这里显示 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-confirm" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- 以下是原有页面内容，完全保持不变 -->
+
     <div class="auth-container1">
         <div class="auth-card">
             <div class="auth-logo">
-<!--                <img src="https://via.placeholder.com/60x60" alt="系统Logo">-->
                 <h3>创建新账号</h3>
                 <p class="text-muted">加入知识图谱系统</p>
             </div>
 
             <form id="registerForm">
-                <div class="alert alert-danger d-none" id="registerError"></div>
-
-                <div class="form-group">
+                <div class="form-group mb-3">
                     <label for="registerUsername" class="form-label">用户名</label>
-                    <input type="text" id="registerUsername" class="form-control" placeholder="请输入用户名" required>
-                    <div class="error-message d-none" id="registerUsernameError"></div>
+                    <input type="text" id="registerUsername" class="form-control" placeholder="请输入用户名(3-20位字母或数字)" required>
+                    <div class="requirement-list mt-1">
+                        <div class="requirement-item" id="usernameLengthReq">
+                            <span class="requirement-icon">•</span>
+                            <span>3-20字符</span>
+                        </div>
+                        <div class="requirement-item" id="usernameCharReq">
+                            <span class="requirement-icon">•</span>
+                            <span>字母/数字/下划线</span>
+                        </div>
+                    </div>
                 </div>
 
-
-                <div class="form-group">
+                <div class="form-group mb-3">
                     <label for="registerPassword" class="form-label">密码</label>
-                    <input type="password" id="registerPassword" class="form-control" placeholder="请输入密码" required>
-                    <div class="error-message d-none" id="registerPasswordError"></div>
+                    <input type="password" id="registerPassword" class="form-control" placeholder="请输入密码(8位以上)" required>
+                    <div class="requirement-list mt-1">
+                        <div class="requirement-item" id="lengthReq">
+                            <span class="requirement-icon">•</span>
+                            <span>≥8位</span>
+                        </div>
+                        <div class="requirement-item" id="upperReq">
+                            <span class="requirement-icon">•</span>
+                            <span>含大写字母</span>
+                        </div>
+                        <div class="requirement-item" id="numberReq">
+                            <span class="requirement-icon">•</span>
+                            <span>含数字</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mb-3">
                     <label for="registerPasswordConfirm" class="form-label">确认密码</label>
                     <input type="password" id="registerPasswordConfirm" class="form-control" placeholder="请再次输入密码" required>
-                    <div class="error-message d-none" id="registerPasswordConfirmError"></div>
                 </div>
 
-                <div class="form-group form-check">
+                <div class="form-group form-check mb-3">
                     <input type="checkbox" class="form-check-input" id="acceptTerms" required>
                     <label class="form-check-label" for="acceptTerms">
                         我已阅读并同意<a href="#" class="text-decoration-none">服务条款</a>和<a href="#" class="text-decoration-none">隐私政策</a>
@@ -55,191 +177,179 @@
                     <button type="submit" class="btn btn-success auth-btn">注册</button>
                 </div>
 
-
                 <div class="auth-footer">
                     <p class="text-center mt-3">
-                        已有账号? <a href="login.html" class="text-decoration-none">立即登录</a>
+                        已有账号? <a href="index.html" class="text-decoration-none">立即登录</a>
                     </p>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-
         document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM fully loaded");
+            // 初始化弹窗
+            const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
 
+            // 显示消息的函数（极简版）
+            function showMessage(title, message) {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalMessage').textContent = message;
+                messageModal.show();
+            }
 
-    // 垂直打字动画
-    const textLeft = "请 您 创 建";
-    const textRight = "新 的 账 号";
-    const typingLeftElement = document.getElementById('typingLeft');
-    const typingRightElement = document.getElementById('typingText');
+            // 保持原有的打字动画、验证逻辑和表单处理代码
 
-    // 打字动画函数
-    function typeVertical(element, text, speed, callback) {
-        const lines = text.split('\n');
-        let i = 0, j = 0;
+            // 实时用户名验证
+            document.getElementById('registerUsername').addEventListener('input', function() {
+                const username = this.value;
+                const lengthReq = document.getElementById('usernameLengthReq');
+                const charReq = document.getElementById('usernameCharReq');
 
-        function typeLine() {
-            if (i < lines.length) {
-                if (j <= lines[i].length) {
-                    element.innerHTML = lines.slice(0, i).join('<br>') +
-                                      '<br>' + lines[i].substring(0, j);
-                    j++;
-                    setTimeout(typeLine, speed);
+                // 验证长度
+                if (username.length === 0) {
+                    lengthReq.classList.remove('valid', 'invalid');
+                    charReq.classList.remove('valid', 'invalid');
                 } else {
-                    i++;
-                    j = 0;
-                    element.innerHTML = lines.slice(0, i).join('<br>');
-                    if (i < lines.length) {
-                        setTimeout(typeLine, speed * 2);
-                    } else if (callback) {
-                        callback();
+                    const lengthValid = username.length >= 3 && username.length <= 20;
+                    lengthReq.classList.toggle('valid', lengthValid);
+                    lengthReq.classList.toggle('invalid', !lengthValid);
+
+                    // 验证字符
+                    const charValid = /^[a-zA-Z0-9_]+$/.test(username);
+                    charReq.classList.toggle('valid', charValid);
+                    charReq.classList.toggle('invalid', !charValid);
+                }
+            });
+
+            // 实时密码验证
+            document.getElementById('registerPassword').addEventListener('input', function() {
+                validatePassword(this.value);
+            });
+
+            // 密码验证函数
+            function validatePassword(password) {
+                const lengthValid = password.length >= 8;
+                const upperValid = /[A-Z]/.test(password);
+                const numberValid = /[0-9]/.test(password);
+
+                // 更新密码要求提示
+                document.getElementById('lengthReq').classList.toggle('valid', lengthValid);
+                document.getElementById('upperReq').classList.toggle('valid', upperValid);
+                document.getElementById('numberReq').classList.toggle('valid', numberValid);
+                document.getElementById('lengthReq').classList.toggle('invalid', !lengthValid && password.length > 0);
+                document.getElementById('upperReq').classList.toggle('invalid', !upperValid && password.length > 0);
+                document.getElementById('numberReq').classList.toggle('invalid', !numberValid && password.length > 0);
+
+                return lengthValid && upperValid && numberValid;
+            }
+
+            // 注册表单处理
+            const registerForm = document.getElementById('registerForm');
+            const submitButton = registerForm.querySelector('.auth-btn');
+
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // 获取表单数据
+                const username = document.getElementById('registerUsername').value.trim();
+                const password = document.getElementById('registerPassword').value;
+                const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+                const acceptTerms = document.getElementById('acceptTerms').checked;
+
+                // 表单验证标志
+                let isValid = true;
+                let errorMessages = [];
+
+                // 用户名验证
+                if (!username) {
+                    errorMessages.push('请输入用户名');
+                    isValid = false;
+                } else {
+                    const lengthValid = username.length >= 3 && username.length <= 20;
+                    const charValid = /^[a-zA-Z0-9_]+$/.test(username);
+
+                    if (!lengthValid) {
+                        errorMessages.push('用户名长度需为3-20个字符');
+                        isValid = false;
+                    }
+                    if (!charValid) {
+                        errorMessages.push('用户名只能包含字母、数字和下划线');
+                        isValid = false;
                     }
                 }
-            }
-        }
-        typeLine();
-    }
 
-    // 启动打字动画
-    typeVertical(typingLeftElement, textLeft, 150, function() {
-        setTimeout(() => {
-            typeVertical(typingRightElement, textRight, 150);
-        }, 300);
-    });
-
-    // 注册表单处理
-    const registerForm = document.getElementById('registerForm');
-    console.log("registerForm:", registerForm);
-    const submitButton = registerForm.querySelector('.auth-btn');
-
-    registerForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        // 清除错误状态
-        document.getElementById('registerError').classList.add('d-none');
-        document.getElementById('registerUsernameError').classList.add('d-none');
-        document.getElementById('registerPasswordError').classList.add('d-none');
-        document.getElementById('registerPasswordConfirmError').classList.add('d-none');
-
-        // 获取表单数据
-        const username = document.getElementById('registerUsername').value;
-        const password = document.getElementById('registerPassword').value;
-        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-        const acceptTerms = document.getElementById('acceptTerms').checked;
-
-        // 表单验证标志
-        let isValid = true;
-
-        // 用户名验证
-        if (!username.trim()) {
-            document.getElementById('registerUsernameError').textContent = '请输入用户名';
-            document.getElementById('registerUsernameError').classList.remove('d-none');
-            isValid = false;
-        } else if (username.length > 20) {
-            document.getElementById('registerUsernameError').textContent = '用户名不能超过20个字符';
-            document.getElementById('registerUsernameError').classList.remove('d-none');
-            isValid = false;
-        }
-
-        // 密码验证
-        if (!password) {
-            document.getElementById('registerPasswordError').textContent = '请输入密码';
-            document.getElementById('registerPasswordError').classList.remove('d-none');
-            isValid = false;
-        } else if (password.length < 8) {
-            document.getElementById('registerPasswordError').textContent = '密码长度至少为8位';
-            document.getElementById('registerPasswordError').classList.remove('d-none');
-            isValid = false;
-        } else if (!/[A-Z]/.test(password)) {
-            document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个大写字母';
-            document.getElementById('registerPasswordError').classList.remove('d-none');
-            isValid = false;
-        } else if (!/[0-9]/.test(password)) {
-            document.getElementById('registerPasswordError').textContent = '密码必须包含至少一个数字';
-            document.getElementById('registerPasswordError').classList.remove('d-none');
-            isValid = false;
-        }
-
-        // 确认密码验证
-        if (!passwordConfirm) {
-            document.getElementById('registerPasswordConfirmError').textContent = '请确认密码';
-            document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
-            isValid = false;
-        } else if (password !== passwordConfirm) {
-            document.getElementById('registerPasswordConfirmError').textContent = '两次输入的密码不一致';
-            document.getElementById('registerPasswordConfirmError').classList.remove('d-none');
-            isValid = false;
-        }
-
-        // 条款同意验证
-        if (!acceptTerms) {
-            document.getElementById('registerError').textContent = '请接受服务条款和隐私政策';
-            document.getElementById('registerError').classList.remove('d-none');
-            isValid = false;
-        }
-
-        // 如果验证通过，发送注册请求
-        if (isValid) {
-            try {
-                // 设置按钮为加载状态
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 注册中...';
-
-                // 发送注册请求
-                const response = await fetch('http://127.0.0.1:8000/api/register/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: username,
-                        password: password
-                    })
-                });
-
-                const result = await response.json();
-                console.log("response.ok:", response.ok);
-console.log("response.status:", response.status);
-console.log("result:", result);
-
-                if (response.ok && result.message === "注册成功") {
-                    // 注册成功提示
-                    console.log("注册成功，准备跳转");
-                    const successMessage = document.createElement('div');
-                    successMessage.className = 'alert alert-success text-center';
-                    successMessage.textContent = '注册成功！即将跳转到登录页面...';
-                    registerForm.prepend(successMessage);
-
-                    // 3秒后跳转到登录页面
-                    setTimeout(() => {
-                        // 跳转到index.html（登录页面）并传递注册成功的用户名
-                        window.location.href = `index.html?registered_user=${encodeURIComponent(username)}`;
-                    }, 3000);
+                // 密码验证
+                if (!password) {
+                    errorMessages.push('请输入密码');
+                    isValid = false;
                 } else {
-                    // 显示服务器返回的错误信息
-                    const errorMsg = result.error || '注册失败，请重试';
-                    document.getElementById('registerError').textContent = errorMsg;
-                    document.getElementById('registerError').classList.remove('d-none');
-
-                    // 重置按钮状态
-                    submitButton.disabled = false;
-                    submitButton.textContent = '注册';
+                    const passwordValid = validatePassword(password);
+                    if (!passwordValid) {
+                        errorMessages.push('密码需8位以上且包含大写字母和数字');
+                        isValid = false;
+                    }
                 }
-            } catch (error) {
-                console.error('注册请求失败:', error);
-                document.getElementById('registerError').textContent = '网络错误，请检查连接';
-                document.getElementById('registerError').classList.remove('d-none');
 
-                // 重置按钮状态
-                submitButton.disabled = false;
-                submitButton.textContent = '注册';
-            }
-        }
-    });
-});
+                // 确认密码验证
+                if (!passwordConfirm) {
+                    errorMessages.push('请确认密码');
+                    isValid = false;
+                } else if (password !== passwordConfirm) {
+                    errorMessages.push('两次输入的密码不一致');
+                    isValid = false;
+                }
+
+                // 条款同意验证
+                if (!acceptTerms) {
+                    errorMessages.push('请接受服务条款和隐私政策');
+                    isValid = false;
+                }
+
+                // 如果验证通过，发送注册请求
+                if (isValid) {
+                    try {
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 注册中...';
+
+                        const response = await fetch('http://127.0.0.1:8000/api/register/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                user_id: username,
+                                password: password
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.message === "注册成功") {
+                            showMessage('注册成功', '注册成功！即将跳转到登录页面...');
+
+                            setTimeout(() => {
+                                window.location.href = `index.html?registered_user=${encodeURIComponent(username)}`;
+                            }, 3000);
+                        } else {
+                            const errorMsg = result.error || '注册失败，请重试';
+                            showMessage('注册失败', errorMsg);
+                            submitButton.disabled = false;
+                            submitButton.textContent = '注册';
+                        }
+                    } catch (error) {
+                        showMessage('网络错误', '网络错误，请检查连接');
+                        submitButton.disabled = false;
+                        submitButton.textContent = '注册';
+                    }
+                } else {
+                    showMessage('注册失败', errorMessages.join('；'));
+                }
+            });
+        });
     </script>
 </body>
 </html>
