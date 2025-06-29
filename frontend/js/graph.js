@@ -1,5 +1,5 @@
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON
-,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds} from './api.js';
+,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds,fetchUserGraphs} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -486,12 +486,20 @@ export function exportSVG(includeStyles = true) {
 
 export async function loadGraphList(userId) {
   const select = document.getElementById("graphSelect");
-  select.innerHTML = '<option value="">选择要加载的图谱</option>';
 
   try {
     const data = await fetchUserGraphIds(userId);
     const graphIds = data.graph_ids || [];
 
+    // ✅ 只有在用户有两个及以上图谱时，才添加“加载所有图谱”
+    if (graphIds.length >= 2) {
+      const allOption = document.createElement("option");
+      allOption.value = "all";
+      allOption.text = "加载所有图谱";
+      select.appendChild(allOption);
+    }
+
+    // 添加每个图谱选项
     graphIds.forEach(id => {
       const option = document.createElement("option");
       option.value = id;
@@ -500,14 +508,16 @@ export async function loadGraphList(userId) {
     });
 
     console.log("已刷新图谱下拉列表：", graphIds);
-    return graphIds;  // ✅ 加上 return
+    return graphIds;
 
   } catch (err) {
     console.error("加载用户图谱列表失败：", err);
     alert("加载用户图谱列表失败！");
-    return []; // 遇到异常时返回空数组，避免 undefined
+    return [];
   }
 }
+
+
 
 window.handleUpload = async function () {
   const input = document.getElementById("upload-file");
@@ -813,12 +823,51 @@ window.loadSelectedGraph = async function () {
   if (!selectedId) return;
 
   try {
-    currentGraphId = selectedId;
-    const graphData = await fetchGraphData(currentGraphId);
-    renderGraph(graphData);
+    if (selectedId === "all") {
+      const userId = sessionStorage.getItem('currentUser') || "default_user";
+      const allGraphs = await fetchUserGraphs(userId); // 返回的是数组
+
+      if (!Array.isArray(allGraphs)) {
+        throw new Error("返回格式错误：预期为图谱数组");
+      }
+
+      // 合并所有图谱的节点与关系
+      const mergedData = {
+        nodes: [],
+        links: []
+      };
+
+      const nodeMap = new Map(); // 避免重复节点
+      const linkSet = new Set(); // 避免重复边
+
+      for (const graph of allGraphs) {
+        for (const node of graph.nodes) {
+          if (!nodeMap.has(node.id)) {
+            nodeMap.set(node.id, node);
+          }
+        }
+        for (const link of graph.links) {
+          const key = `${link.source}->${link.target}`;
+          if (!linkSet.has(key)) {
+            linkSet.add(key);
+            mergedData.links.push(link);
+          }
+        }
+      }
+
+      mergedData.nodes = Array.from(nodeMap.values());
+
+      currentGraphId = "all";
+      renderGraph(mergedData);
+    } else {
+      currentGraphId = selectedId;
+      const graphData = await fetchGraphData(currentGraphId);
+      renderGraph(graphData);
+    }
   } catch (err) {
     alert("图谱加载失败！");
     console.error(err);
   }
 };
+
 
