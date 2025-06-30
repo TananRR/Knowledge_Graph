@@ -12,8 +12,9 @@
   <!-- 引入 particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
-<!-- 在head中添加 -->
-<script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/lib/umd.js"></script>
+<!-- 使用 UMD 版本（全局变量 canvg） -->
+<script src="https://cdn.jsdelivr.net/npm/canvg@4.0.3/lib/umd.js"></script>
+
 
 <style>
  :root {
@@ -647,6 +648,10 @@ body.dark-theme .tab-button.active {
   <div class="tooltip" id="tooltip"></div>
 
   <script type="module" src="./js/graph.js"></script>
+
+<!-- 用于显示 SVG 转换为 Canvas 的容器 -->
+    <canvas id="graph-canvas" style="display:none;"></canvas>
+
  <script>
     const userId = sessionStorage.getItem('currentUser') || 'default_user';
     console.log("当前用户:", userId);
