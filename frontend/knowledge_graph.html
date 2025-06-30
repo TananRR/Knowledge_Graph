@@ -12,8 +12,7 @@
   <!-- 引入 particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
-<!-- 使用 UMD 版本（全局变量 canvg） -->
-<script src="https://cdn.jsdelivr.net/npm/canvg@4.0.3/lib/umd.js"></script>
+
 
 
 <style>
@@ -555,7 +554,7 @@ body.dark-theme .tab-button.active {
         <button class="danger" onclick="handleDeleteByUser()"><i class="fas fa-trash-alt"></i> 删除全部图谱</button>
       </div>
     </div>
-    
+
 <div class="toolbar-card tab-panel" id="setting-tab">
   <!-- 注销用户 -->
   <div class="toolbar-section">
@@ -649,8 +648,7 @@ body.dark-theme .tab-button.active {
 
   <script type="module" src="./js/graph.js"></script>
 
-<!-- 用于显示 SVG 转换为 Canvas 的容器 -->
-    <canvas id="graph-canvas" style="display:none;"></canvas>
+
 
  <script>
     const userId = sessionStorage.getItem('currentUser') || 'default_user';
