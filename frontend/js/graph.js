@@ -660,70 +660,114 @@ window.exportJSON = async function() {
 
 window.exportPNG = async function() {
   try {
-    // 1. 获取并克隆SVG元素
-    const svgElement = document.querySelector("svg");
-    const clonedSvg = svgElement.cloneNode(true);
+  if (!window.canvg) throw new Error("canvg 未加载！");
 
-    // 2. 添加白色背景矩形作为第一个元素
+    console.log("[1/8] 开始PNG导出流程");
+
+    // 1. 获取并克隆SVG元素
+    console.log("[2/8] 获取并克隆SVG元素");
+    const svgElement = document.querySelector("svg");
+    if (!svgElement) {
+      throw new Error("未找到SVG元素");
+    }
+    const clonedSvg = svgElement.cloneNode(true);
+    console.log("SVG克隆完成", clonedSvg);
+
+    // 2. 添加白色背景
+    console.log("[3/8] 添加白色背景");
     const svgNS = "http://www.w3.org/2000/svg";
     const rect = document.createElementNS(svgNS, "rect");
     rect.setAttribute("width", "100%");
     rect.setAttribute("height", "100%");
     rect.setAttribute("fill", "#FFFFFF");
     clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+    console.log("背景矩形已添加");
 
     // 3. 计算边界和尺寸
+    console.log("[4/8] 计算边界和尺寸");
     const svgGroup = clonedSvg.querySelector("g");
+    if (!svgGroup) {
+      throw new Error("SVG中未找到<g>元素");
+    }
     const bbox = svgGroup.getBBox();
+    console.log("边界框信息:", bbox);
+
     const padding = 50;
     const width = Math.ceil(bbox.width + padding * 2);
     const height = Math.ceil(bbox.height + padding * 2);
+    console.log(`计算尺寸: 宽度=${width}, 高度=${height}`);
 
-    // 4. 创建画布并设置尺寸
+    // 4. 创建画布
+    console.log("[5/8] 创建画布");
     const canvas = document.createElement("canvas");
-    canvas.width = width * 2;
+    canvas.width = width * 2;  // 2倍尺寸提高质量
     canvas.height = height * 2;
+    console.log(`画布创建完成: ${canvas.width}x${canvas.height}`);
+
     const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("无法获取canvas 2D上下文");
+    }
 
     // 5. 填充背景色
+    console.log("[6/8] 填充背景色");
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 6. 调整SVG位置并序列化
+    console.log("[7/8] 序列化并调整SVG位置");
     const serializer = new XMLSerializer();
     let svgString = serializer.serializeToString(clonedSvg);
-    svgString = svgString.replace(
-      '<g>',
-      `<g transform="translate(${padding - bbox.x}, ${padding - bbox.y})">`
-    );
+    console.log("原始SVG字符串长度:", svgString.length);
+
+    const transformStr = `translate(${padding - bbox.x}, ${padding - bbox.y})`;
+    svgString = svgString.replace('<g>', `<g transform="${transformStr}">`);
+    console.log("调整后的SVG字符串长度:", svgString.length);
+    console.log("应用的变换:", transformStr);
 
     // 7. 使用canvg渲染
+    console.log("[8/8] 使用canvg渲染");
+    console.log("canvg对象检查:", typeof canvg, canvg);
+    console.log("Canvg.fromString检查:", typeof canvg.Canvg?.fromString);
+
     const v = await canvg.Canvg.fromString(ctx, svgString, {
       ignoreDimensions: true,
       ignoreClear: true,
-      scaleWidth: width * 2,
-      scaleHeight: height * 2,
+      scaleWidth: canvas.width,
+      scaleHeight: canvas.height,
       ignoreMouse: true,
       ignoreAnimation: true
     });
+    console.log("canvg实例创建完成:", v);
 
-    // 8. 等待渲染完成
+    // 等待渲染完成
+    console.log("开始渲染...");
     await v.render();
+    console.log("渲染完成");
     await new Promise(resolve => setTimeout(resolve, 500)); // 额外等待时间
 
-    // 9. 触发下载
+    // 8. 触发下载
+    console.log("准备导出PNG");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `knowledge-graph-${timestamp}.png`;
+
     const link = document.createElement("a");
-    link.download = `knowledge-graph-${new Date().toISOString().slice(0, 19)}.png`;
+    link.download = filename;
     link.href = canvas.toDataURL("image/png");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    console.log(`PNG导出完成: ${filename}`);
 
   } catch (error) {
-    console.error("PNG导出失败:", error);
+    console.error("PNG导出失败 - 详细错误:", {
+      error: error,
+      message: error.message,
+      stack: error.stack
+    });
     alert(`导出失败: ${error.message}`);
   }
-}
+};
 
 
 window.exportSVG = async function() {
