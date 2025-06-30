@@ -1,5 +1,5 @@
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON
-,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds,fetchUserGraphs} from './api.js';
+,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds,fetchUserGraphs,deleteUser} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -819,6 +819,94 @@ window.loadSelectedGraph = async function () {
     console.error(err);
   }
 };
+
+window.DeleteUser = async function () {
+  const currentUser = sessionStorage.getItem('currentUser');
+
+  try {
+    // 显示带密码输入的确认对话框
+    const { value: password } = await Swal.fire({
+      title: '确认删除账户',
+      html: `<p>请输入您的密码以确认删除账户</p>`,
+      input: 'password',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off',
+        placeholder: '输入账户密码'
+      },
+      showCancelButton: true,
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      focusConfirm: false,
+      preConfirm: (password) => {
+        if (!password) {
+          Swal.showValidationMessage('请输入密码');
+        }
+        return password;
+      }
+    });
+
+    if (!password) return; // 用户取消操作
+
+    // 显示二次确认
+    const result = await Swal.fire({
+      title: '确定删除账户吗？',
+      text: "此操作不可撤销！所有数据将被永久删除。",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // 显示加载状态
+    Swal.fire({
+      title: '正在删除...',
+      html: '请稍候，正在删除您的账户',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // 调用API删除用户
+    const response = await deleteUser(currentUser, password);
+
+   if (response.message === '用户已删除') {
+  sessionStorage.removeItem('currentUser');
+  localStorage.removeItem('rememberedUser');
+
+  Swal.fire({
+    icon: 'success',
+    title: '账户已删除',
+    text: '您的账户已成功删除',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false
+  }).then(() => {
+     console.log("Swal 关闭后跳转开始");
+    window.location.href = '/index.html';  // 根据你页面实际位置调整
+  });
+
+} else {
+  throw new Error(response.message || '删除失败');
+}
+
+  } catch (error) {
+    // 显示错误信息（自动替换掉加载框）
+    Swal.fire({
+      icon: 'error',
+      title: '删除失败',
+      text: error.message || '删除账户时发生错误'
+    });
+  }
+};
+
 
 
 
