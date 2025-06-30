@@ -25,6 +25,7 @@ const colorMap = {
 
 // 默认颜色（未匹配类型时使用）
 const defaultColor = "#64748b";
+
 export function renderGraph(graphData) {
   d3.select("svg").selectAll("*").remove();
 
@@ -766,5 +767,23 @@ window.loadSelectedGraph = async function () {
     console.error(err);
   }
 };
+
+window.updateGraphTheme(isDark) {
+  if (!linkRef || !nodeRef) return;
+
+  // 更新连线样式
+  linkRef
+    .attr('stroke', isDark ? 'rgba(200, 200, 200, 0.3)' : 'rgba(120,120,120,0.3)')
+    .attr('marker-end', isDark ? 'url(#arrow-dark)' : 'url(#arrow-normal)');
+
+  // 更新节点文字颜色
+  d3.select('svg').selectAll('text')
+    .attr('fill', isDark ? '#e0e0e0' : '#222')
+    .attr('stroke', isDark ? '#333' : 'white');
+
+  // 更新链接标签颜色
+  d3.select('svg').selectAll('.link-label')
+    .attr('fill', isDark ? '#b0b0b0' : '#666');
+}
 
 
