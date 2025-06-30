@@ -472,8 +472,27 @@ Swal.fire({
       d3.select("svg").selectAll("*").remove();
       currentData = null;
       currentGraphId = null;
-      // ✅ 删除成功后，刷新图谱下拉列表
-      await loadGraphList(userId);
+       const graphIds = await loadGraphList(userId);
+
+    if (!graphIds.length) {
+      d3.select("svg").selectAll("*").remove();
+      d3.select("svg").append("text")
+        .attr("x", window.innerWidth / 2)
+        .attr("y", window.innerHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "20px")
+        .attr("fill", "#666")
+        .text("图谱中没有数据，请先上传数据");
+      return;
+    }
+
+    // 默认选中最后一个并加载
+    const select = document.getElementById("graphSelect");
+    select.value = graphIds[graphIds.length - 1];
+    currentGraphId = select.value;
+
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
     })
     .catch(err => {
       Swal.fire({ icon: 'error', title: '删除失败！' });
@@ -512,8 +531,27 @@ Swal.fire({
       d3.select("svg").selectAll("*").remove();
       currentData = null;
       currentGraphId = null;
-        // ✅ 删除成功后，刷新图谱下拉列表
-      await loadGraphList(userId);
+      const graphIds = await loadGraphList(userId);
+
+    if (!graphIds.length) {
+      d3.select("svg").selectAll("*").remove();
+      d3.select("svg").append("text")
+        .attr("x", window.innerWidth / 2)
+        .attr("y", window.innerHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "20px")
+        .attr("fill", "#666")
+        .text("图谱中没有数据，请先上传数据");
+      return;
+    }
+
+    // 默认选中最后一个并加载
+    const select = document.getElementById("graphSelect");
+    select.value = graphIds[graphIds.length - 1];
+    currentGraphId = select.value;
+
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
     } catch (err) {
       await Swal.fire({
         title: '删除失败',
