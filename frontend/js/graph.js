@@ -148,7 +148,6 @@ const node = container.append("g")
   .attr("fill", d => colorMap[d.type] || defaultColor)
   .attr("stroke", d => d3.color(colorMap[d.type] || defaultColor).darker(0.5)) // 深色边框
   .attr("stroke-width", 1.5)
-  .attr("filter", "url(#nodeGlow)");        // 添加发光效果（需在defs定义）
 
   nodeRef = node;
 // 在 node 定义后添加：
