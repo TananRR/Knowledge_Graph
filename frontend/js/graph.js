@@ -391,28 +391,37 @@ select.innerHTML = "";  // 清空之前的选项
 }
 
 window.handleUpload = async function () {
-  const input = document.getElementById("upload-file");
-  const file = input.files[0];
+  const fileInput = document.getElementById("upload-file");
+  const file = fileInput.files[0];
   const fileNameDisplay = document.getElementById("file-name"); // 获取文件名显示元素
+  const userId = sessionStorage.getItem('currentUser') || "default_user";
 
   if (!file) {
-     Swal.fire({ icon: 'warning', title: '请先选择文件！' });
+    Swal.fire({ icon: 'warning', title: '请先选择文件！' });
     return;
   }
 
-  const userId = sessionStorage.getItem('currentUser') || "default_user";
+  // 显示加载中的弹窗
+  const swalInstance = Swal.fire({
+    title: '文件提取中...',
+    html: '请稍候，处理完成后会自动关闭',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
   try {
-    const result = await uploadTextFile(file,userId);
-    if (result.graph_id) {
-      Swal.fire({ icon: 'success', title: '上传并更新成功！' });
-      currentGraphId = result.graph_id;
-      document.querySelector("button[onclick='handleSearch()']").disabled = false;
+    // 使用 uploadTextFile 上传文件
+    const result = await uploadTextFile(file, userId);
 
-      // 清除文件选择和显示
-      input.value = ""; // 重置文件输入框
-      fileNameDisplay.textContent = ""; // 清空文件名显示
+    // 关闭加载中弹窗
+    await swalInstance.close();
 
+    if (result.status === "success") {
+      // 成功处理
+      Swal.fire("成功", "文件提取完成！", "success");
+       currentGraphId = result.graph_id;
       // ✅ 上传成功后，刷新图谱下拉列表
       await loadGraphList(userId);
 
@@ -428,12 +437,17 @@ window.handleUpload = async function () {
         alert("获取或渲染图谱失败！");
         console.error("渲染失败：", err2);
       }
+
     } else {
-      Swal.fire({ icon: 'error', title: '上传失败', text: result.msg || '未知错误' });
+      // 失败处理
+      Swal.fire("失败", result.message || "提取失败", "error");
     }
   } catch (err) {
-     Swal.fire({ icon: 'error', title: '上传请求失败', text: '请检查后端服务' });
-    console.error("上传失败：", err);
+    await swalInstance.close();
+    Swal.fire("错误", "请求失败：" + err.message, "error");
+  } finally {
+      fileInput.value = ""; // 重置文件输入框
+      fileNameDisplay.textContent = ""; // 清空文件名显示
   }
 };
 
@@ -768,22 +782,5 @@ window.loadSelectedGraph = async function () {
   }
 };
 
-window.updateGraphTheme(isDark) {
-  if (!linkRef || !nodeRef) return;
-
-  // 更新连线样式
-  linkRef
-    .attr('stroke', isDark ? 'rgba(200, 200, 200, 0.3)' : 'rgba(120,120,120,0.3)')
-    .attr('marker-end', isDark ? 'url(#arrow-dark)' : 'url(#arrow-normal)');
-
-  // 更新节点文字颜色
-  d3.select('svg').selectAll('text')
-    .attr('fill', isDark ? '#e0e0e0' : '#222')
-    .attr('stroke', isDark ? '#333' : 'white');
-
-  // 更新链接标签颜色
-  d3.select('svg').selectAll('.link-label')
-    .attr('fill', isDark ? '#b0b0b0' : '#666');
-}
 
 
