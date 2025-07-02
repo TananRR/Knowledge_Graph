@@ -1,5 +1,4 @@
 const BASE_URL = "http://127.0.0.1:8000/api";
-
 // 通用错误处理函数
 async function handleResponse(response) {
   if (!response.ok) {
@@ -67,6 +66,21 @@ export async function fetchAllGraphs() {
 export async function deleteAllGraphs() {
   const resp = await fetch(`${BASE_URL}/delete/all/`, {
     method: "DELETE"
+  });
+  return handleResponse(resp);
+}
+
+// ✅ 删除用户
+export async function deleteUser(userId, password) {
+  const resp = await fetch(`${BASE_URL}/delete_user/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", // 指定请求类型为 JSON
+    },
+    body: JSON.stringify({ // 将参数序列化为 JSON
+      user_id: userId,
+      password: password,
+    }),
   });
   return handleResponse(resp);
 }

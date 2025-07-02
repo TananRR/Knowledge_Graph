@@ -1,5 +1,5 @@
 import { fetchGraphData, uploadTextFile, searchNodes, downloadGraphJSON
-,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds} from './api.js';
+,deleteAllGraphs,deleteGraphById,deleteGraphsByUser,fetchUserGraphIds,fetchUserGraphs,deleteUser} from './api.js';
 
 let currentGraphId = null;  // 新增：当前图谱ID
 let currentData = null;
@@ -100,15 +100,16 @@ if (!graphData || !graphData.nodes || !graphData.links) {
   currentData = graphData;
 
   // 创建力导向图模拟
-  const simulation = d3.forceSimulation(graphData.nodes)
-    .force("link", d3.forceLink(graphData.links)
-      .id(d => d.id)
-      .distance(150)
-      .strength(0.8))
-    .force("charge", d3.forceManyBody().strength(-500))
-    .force("collide", d3.forceCollide().radius(30).strength(0.7))
-    .force("center", d3.forceCenter(width / 2, height / 2))
-    .alphaDecay(0.05);
+ const simulation = d3.forceSimulation(graphData.nodes)
+  .force("link", d3.forceLink(graphData.links)
+    .id(d => d.id)
+    .distance(50)
+    .strength(1.1))
+  .force("charge", d3.forceManyBody().strength(-50))
+  .force("collide", d3.forceCollide().radius(50).strength(1.1))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .alphaDecay(0.03);
+
 
   simulationRef = simulation;
 
@@ -130,7 +131,7 @@ const link = container.append("g")
     .data(graphData.links)
     .enter()
     .append("text")
-    .text(d => d.type)
+    .text(d => d.label)
     .attr("font-size", 10)
     .attr("fill", "#666");
   // 画节点圆圈
@@ -148,7 +149,6 @@ const node = container.append("g")
   .attr("fill", d => colorMap[d.type] || defaultColor)
   .attr("stroke", d => d3.color(colorMap[d.type] || defaultColor).darker(0.5)) // 深色边框
   .attr("stroke-width", 1.5)
-  .attr("filter", "url(#nodeGlow)");        // 添加发光效果（需在defs定义）
 
   nodeRef = node;
 // 在 node 定义后添加：
@@ -200,7 +200,12 @@ const label = container.append("g")
 
   // 交互事件
   node.on("click", (event, d) => {
-    alert(`实体名称：${d.name}\n类型：${d.type}\nID：${d.id}`);
+    Swal.fire({
+    title: `实体：${d.name}`,
+    html: `<b>类型：</b>${d.type}<br><b>ID：</b>${d.id}`,
+    icon: 'info',
+    confirmButtonText: '关闭'
+  });
   });
 
   node
@@ -257,7 +262,12 @@ export function focusNode() {
 
   const match = currentData.nodes.find(n => n.name.includes(keyword));
   if (!match) {
-    alert("未找到实体：" + keyword);
+     Swal.fire({
+    icon: 'warning',
+    title: '未找到实体',
+    text: `关键词：${keyword}`,
+    confirmButtonText: '确定'
+  });
     return;
   }
 
@@ -346,61 +356,23 @@ export function focusNode() {
 
 }
 
-
-
-/**
- * 将当前知识图谱导出为SVG矢量图
- * @param {boolean} [includeStyles=true] - 是否包含内联样式
- */
-export function exportSVG(includeStyles = true) {
-  try {
-    const svgElement = document.querySelector("svg");
-    const clonedSvg = svgElement.cloneNode(true);
-
-    // 可选：移除交互元素
-    clonedSvg.querySelectorAll('[event-listener]').forEach(el => {
-      el.removeAttribute('event-listener');
-    });
-
-    // 序列化SVG
-    const serializer = new XMLSerializer();
-    let svgString = serializer.serializeToString(clonedSvg);
-
-    // 优化SVG字符串
-    if (!includeStyles) {
-      svgString = svgString.replace(/<style.*?<\/style>/gs, '');
-    }
-
-    // 创建下载
-    const blob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.download = `knowledge-graph-${timestamp}.svg`;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-
-    // 清理
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-  } catch (error) {
-    console.error("SVG导出失败:", error);
-    alert(`SVG导出失败: ${error.message}`);
-  }
-}
-
 export async function loadGraphList(userId) {
   const select = document.getElementById("graphSelect");
-  select.innerHTML = '<option value="">选择要加载的图谱</option>';
+select.innerHTML = "";  // 清空之前的选项
 
   try {
     const data = await fetchUserGraphIds(userId);
     const graphIds = data.graph_ids || [];
 
+    // ✅ 只有在用户有两个及以上图谱时，才添加“加载所有图谱”
+    if (graphIds.length >= 2) {
+      const allOption = document.createElement("option");
+      allOption.value = "all";
+      allOption.text = "加载所有图谱";
+      select.appendChild(allOption);
+    }
+
+    // 添加每个图谱选项
     graphIds.forEach(id => {
       const option = document.createElement("option");
       option.value = id;
@@ -409,38 +381,47 @@ export async function loadGraphList(userId) {
     });
 
     console.log("已刷新图谱下拉列表：", graphIds);
-    return graphIds;  // ✅ 加上 return
+    return graphIds;
 
   } catch (err) {
     console.error("加载用户图谱列表失败：", err);
     alert("加载用户图谱列表失败！");
-    return []; // 遇到异常时返回空数组，避免 undefined
+    return [];
   }
 }
 
 window.handleUpload = async function () {
-  const input = document.getElementById("upload-file");
-  const file = input.files[0];
+  const fileInput = document.getElementById("upload-file");
+  const file = fileInput.files[0];
   const fileNameDisplay = document.getElementById("file-name"); // 获取文件名显示元素
+  const userId = sessionStorage.getItem('currentUser') || "default_user";
 
   if (!file) {
-    alert("请先选择文件！");
+    Swal.fire({ icon: 'warning', title: '请先选择文件！' });
     return;
   }
 
-  const userId = sessionStorage.getItem('currentUser') || "default_user";
+  // 显示加载中的弹窗
+  const swalInstance = Swal.fire({
+    title: '文件提取中...',
+    html: '请稍候，处理完成后会自动关闭',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
 
   try {
-    const result = await uploadTextFile(file,userId);
-    if (result.graph_id) {
-      alert("上传并更新成功！");
-      currentGraphId = result.graph_id;
-      document.querySelector("button[onclick='handleSearch()']").disabled = false;
+    // 使用 uploadTextFile 上传文件
+    const result = await uploadTextFile(file, userId);
 
-      // 清除文件选择和显示
-      input.value = ""; // 重置文件输入框
-      fileNameDisplay.textContent = ""; // 清空文件名显示
+    // 关闭加载中弹窗
+    await swalInstance.close();
 
+    if (result.status === "success") {
+      // 成功处理
+      Swal.fire("成功", "文件提取完成！", "success");
+       currentGraphId = result.graph_id;
       // ✅ 上传成功后，刷新图谱下拉列表
       await loadGraphList(userId);
 
@@ -456,79 +437,145 @@ window.handleUpload = async function () {
         alert("获取或渲染图谱失败！");
         console.error("渲染失败：", err2);
       }
+
     } else {
-      alert("上传失败：" + (result.msg || "未知错误"));
+      // 失败处理
+      Swal.fire("失败", result.message || "提取失败", "error");
     }
   } catch (err) {
-    alert("上传请求失败，请检查后端服务");
-    console.error("上传失败：", err);
-  }
-};
-
-// 删除全部图谱
-window.handleDeleteAll = async function () {
-  if (!confirm("确定删除所有图谱吗？此操作不可恢复！")) return;
-
-  try {
-    const result = await deleteAllGraphs(); // 调用接口
-    alert(result.message || "所有图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败，请检查后端服务");
-    console.error(err);
+    await swalInstance.close();
+    Swal.fire("错误", "请求失败：" + err.message, "error");
+  } finally {
+      fileInput.value = ""; // 重置文件输入框
+      fileNameDisplay.textContent = ""; // 清空文件名显示
   }
 };
 
 // 删除当前子图
 window.handleDeleteGraph = async function () {
-  if (!currentGraphId) return alert("当前没有选中的图谱！");
-  if (!confirm(`确定删除图谱 ${currentGraphId} 吗？`)) return;
+const userId = sessionStorage.getItem('currentUser') || "default_user";
+ if (!currentGraphId) {
+  Swal.fire({ icon: 'warning', title: '当前没有选中的图谱！' });
+  return;
+}
+Swal.fire({
+  title: `确定删除图谱 ${currentGraphId} 吗？`,
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonText: '确定',
+  cancelButtonText: '取消'
+}).then((res) => {
+  if (!res.isConfirmed) return;
+  deleteGraphById(currentGraphId)
+    .then(async result => {
+      Swal.fire({ icon: 'success', title: '图谱删除成功', text: result.message });
+      d3.select("svg").selectAll("*").remove();
+      currentData = null;
+      currentGraphId = null;
+       const graphIds = await loadGraphList(userId);
 
-  try {
-    const result = await deleteGraphById(currentGraphId);
-    alert(result.message || "图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败！");
-    console.error(err);
-  }
+    if (!graphIds.length) {
+      d3.select("svg").selectAll("*").remove();
+      d3.select("svg").append("text")
+        .attr("x", window.innerWidth / 2)
+        .attr("y", window.innerHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "20px")
+        .attr("fill", "#666")
+        .text("图谱中没有数据，请先上传数据");
+      return;
+    }
+
+    // 默认选中最后一个并加载
+    const select = document.getElementById("graphSelect");
+    select.value = graphIds[graphIds.length - 1];
+    currentGraphId = select.value;
+
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
+    })
+    .catch(err => {
+      Swal.fire({ icon: 'error', title: '删除失败！' });
+      console.error(err);
+    });
+});
+
 };
 
 // 删除指定用户图谱（你可以通过 prompt 让用户输入 user_id）
 window.handleDeleteByUser = async function () {
-  const userId = prompt("请输入要删除的用户 ID：");
-  if (!userId) return;
+const userId = sessionStorage.getItem('currentUser') || "default_user";
+if (!userId) return;
 
-  if (!confirm(`确定删除用户 ${userId} 的所有图谱吗？`)) return;
+// 使用 SweetAlert 弹出确认框
+Swal.fire({
+  title: '确认删除？',
+  text: '确定删除所有图谱吗？此操作无法撤销！',
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#d33',
+  cancelButtonColor: '#00a8e6',
+  confirmButtonText: '是的，删除',
+  cancelButtonText: '取消'
+}).then(async (result) => {
+  if (result.isConfirmed) {
+    try {
+      const res = await deleteGraphsByUser(userId);
+      await Swal.fire({
+        title: '删除成功',
+        text: res.message || "用户图谱已成功删除",
+        icon: 'success',
+        confirmButtonText: '确定'
+      });
 
-  try {
-    const result = await deleteGraphsByUser(userId);
-    alert(result.message || "用户图谱删除成功");
-    d3.select("svg").selectAll("*").remove();
-    currentData = null;
-    currentGraphId = null;
-  } catch (err) {
-    alert("删除失败！");
-    console.error(err);
+      d3.select("svg").selectAll("*").remove();
+      currentData = null;
+      currentGraphId = null;
+      const graphIds = await loadGraphList(userId);
+
+    if (!graphIds.length) {
+      d3.select("svg").selectAll("*").remove();
+      d3.select("svg").append("text")
+        .attr("x", window.innerWidth / 2)
+        .attr("y", window.innerHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "20px")
+        .attr("fill", "#666")
+        .text("图谱中没有数据，请先上传数据");
+      return;
+    }
+
+    // 默认选中最后一个并加载
+    const select = document.getElementById("graphSelect");
+    select.value = graphIds[graphIds.length - 1];
+    currentGraphId = select.value;
+
+    const graphData = await fetchGraphData(currentGraphId);
+    renderGraph(graphData);
+    } catch (err) {
+      await Swal.fire({
+        title: '删除失败',
+        text: '发生错误，请稍后再试',
+        icon: 'error',
+        confirmButtonText: '确定'
+      });
+      console.error(err);
+    }
   }
+});
 };
-
 
 window.handleSearch = async function () {
   const keyword = document.getElementById("searchInput").value.trim();
   if (!keyword) {
-    alert("请输入关键词！");
+    Swal.fire({ icon: 'warning', title: '请输入关键词！' });
     return;
   }
 
   try {
     const results = await searchNodes(keyword);
     if (!results.length) {
-      alert("未找到相关实体！");
+      Swal.fire({ icon: 'info', title: '未找到相关实体！' });
       return;
     }
 
@@ -546,23 +593,25 @@ window.handleSearch = async function () {
       // 如果有匹配结果，聚焦到第一个匹配节点
       document.getElementById("searchInput").value = results[0].name;
       focusNode();
+      document.getElementById("searchInput").value = "";
+
     }
 
   } catch (err) {
-    alert("查询失败！");
+    Swal.fire({ icon: 'error', title: '查询失败！' });
     console.error(err);
   }
 };
 
 window.exportJSON = async function() {
   if (!currentGraphId) {
-    alert("没有可导出的图谱");
+    Swal.fire({ icon: 'warning', title: '没有可导出的图谱' });
     return;
   }
   try {
     await downloadGraphJSON(currentGraphId);
   } catch (e) {
-    alert("导出失败");
+   Swal.fire({ icon: 'error', title: '导出失败' });
     console.error(e);
   }
 };
@@ -670,7 +719,7 @@ window.exportSVG = async function() {
 
   } catch (error) {
     console.error("导出SVG失败:", error);
-    alert(`导出SVG失败: ${error.message}`);
+    Swal.fire({ icon: 'error', title: '导出失败' });
   }
 };
 
@@ -702,11 +751,10 @@ window.onload = async function () {
     renderGraph(graphData);
 
   } catch (err) {
-    alert("图谱数据加载失败！");
+     Swal.fire({ icon: 'error', title: '图谱数据加载失败！' });
     console.error(err);
   }
 };
-
 
 // 用户手动选择后点击加载
 window.loadSelectedGraph = async function () {
@@ -715,12 +763,143 @@ window.loadSelectedGraph = async function () {
   if (!selectedId) return;
 
   try {
-    currentGraphId = selectedId;
-    const graphData = await fetchGraphData(currentGraphId);
-    renderGraph(graphData);
+    if (selectedId === "all") {
+      const userId = sessionStorage.getItem('currentUser') || "default_user";
+      const allGraphs = await fetchUserGraphs(userId); // 返回的是数组
+
+      if (!Array.isArray(allGraphs)) {
+        throw new Error("返回格式错误：预期为图谱数组");
+      }
+
+      // 合并所有图谱的节点与关系
+      const mergedData = {
+        nodes: [],
+        links: []
+      };
+
+      const nodeMap = new Map(); // 避免重复节点
+      const linkSet = new Set(); // 避免重复边
+
+      for (const graph of allGraphs) {
+        for (const node of graph.nodes) {
+          if (!nodeMap.has(node.id)) {
+            nodeMap.set(node.id, node);
+          }
+        }
+        for (const link of graph.links) {
+          const key = `${link.source}->${link.target}`;
+          if (!linkSet.has(key)) {
+            linkSet.add(key);
+            mergedData.links.push(link);
+          }
+        }
+      }
+
+      mergedData.nodes = Array.from(nodeMap.values());
+
+      currentGraphId = "all";
+      renderGraph(mergedData);
+    } else {
+      currentGraphId = selectedId;
+      const graphData = await fetchGraphData(currentGraphId);
+      renderGraph(graphData);
+    }
   } catch (err) {
-    alert("图谱加载失败！");
+ Swal.fire({
+  icon: 'error',
+  title: '图谱加载失败',
+  text: error.message
+});
     console.error(err);
   }
 };
+
+window.DeleteUser = async function () {
+  const currentUser = sessionStorage.getItem('currentUser');
+
+  try {
+    // 显示带密码输入的确认对话框
+    const { value: password } = await Swal.fire({
+      title: '确认删除账户',
+      html: `<p>请输入您的密码以确认删除账户</p>`,
+      input: 'password',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off',
+        placeholder: '输入账户密码'
+      },
+      showCancelButton: true,
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      focusConfirm: false,
+      preConfirm: (password) => {
+        if (!password) {
+          Swal.showValidationMessage('请输入密码');
+        }
+        return password;
+      }
+    });
+
+    if (!password) return; // 用户取消操作
+
+    // 显示二次确认
+    const result = await Swal.fire({
+      title: '确定删除账户吗？',
+      text: "此操作不可撤销！所有数据将被永久删除。",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // 显示加载状态
+    Swal.fire({
+      title: '正在删除...',
+      html: '请稍候，正在删除您的账户',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // 调用API删除用户
+    const response = await deleteUser(currentUser, password);
+
+   if (response.message === '用户已删除') {
+  sessionStorage.removeItem('currentUser');
+  localStorage.removeItem('rememberedUser');
+
+  Swal.fire({
+    icon: 'success',
+    title: '账户已删除',
+    text: '您的账户已成功删除',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false
+  }).then(() => {
+     console.log("Swal 关闭后跳转开始");
+    window.location.href = '/index.html';  // 根据你页面实际位置调整
+  });
+
+} else {
+  throw new Error(response.message || '删除失败');
+}
+
+  } catch (error) {
+    // 显示错误信息（自动替换掉加载框）
+    Swal.fire({
+      icon: 'error',
+      title: '删除失败',
+      text: error.message || '删除账户时发生错误'
+    });
+  }
+};
+
+
 
