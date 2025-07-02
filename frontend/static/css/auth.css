@@ -58,7 +58,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, #e5dcff, #d9d0ff, #cdc5ff, #bfbaff, #afb0ff);
+    background: radial-gradient(circle, #c3dbff, #bdd3fb, #b8cbf7, #b4c3f3, #b1bbee);
     background-size: cover;
     padding: 20px;
 }
