@@ -10,23 +10,26 @@ let svgRef = null;
 let zoomBehavior = null;
 
 // graph.js 顶部（在绘制函数之前）
-const colorMap = {
+// 颜色映射 - 根据主题动态调整
+function getColorMap(isDark) {
+  return {
+    "Person": isDark ? "#8DA9C4" : "#A8C5EB",      // 人物
+    "Organization": isDark ? "#D49FB4" : "#F5B8C6", // 组织
+    "Location": isDark ? "#7DB3D3" : "#9DD3F3",    // 地点
+    "Event": isDark ? "#B39CBF" : "#C7B3D2",       // 事件
+    "Concept": isDark ? "#8BC8D0" : "#A3D8E0",     // 概念
+    "DATE": isDark ? "#D8B977" : "#F0C987",        // 日期
+    "Number": isDark ? "#9CC798" : "#B8D9A8",      // 数字
+    "Work": isDark ? "#C89CC8" : "#D8B3D8"         // 作品
+  };
+}
 
-  "Person": "#A8C5EB",      // 人物 - 淡雅天蓝
-  "Organization": "#F5B8C6", // 组织 - 樱花粉
-  "Location": "#9DD3F3",    // 地点 - 清澈水蓝
-  "Event": "#C7B3D2",       // 事件 - 薰衣草紫
-  "Concept": "#A3D8E0",     // 概念 - 薄荷蓝绿
-  "DATE": "#F0C987",        // 日期 - 琥珀黄
-  "Number": "#B8D9A8",      // 数字 - 新芽绿
-  "Work": "#D8B3D8"         // 作品 - 丁香紫
-
-};
-
-// 默认颜色（未匹配类型时使用）
 const defaultColor = "#64748b";
 
 export function renderGraph(graphData) {
+  // 获取当前主题状态
+  const isDark = document.body.classList.contains('dark-theme');
+  const colorMap = getColorMap(isDark);
   d3.select("svg").selectAll("*").remove();
 
   const svg = d3.select("svg");
@@ -59,8 +62,8 @@ defs.append("marker")
   .attr("orient", "auto")
   .append("path")
   .attr("d", "M0,-5L10,0L0,5")
-  .attr("fill", "#999");
-
+  .attr("fill", isDark ? "#D4D4D4" : "#999999");
+//深色箭头
 defs.append("marker")
   .attr("id", "arrow-dark")
   .attr("viewBox", "0 -5 10 10")
@@ -71,7 +74,8 @@ defs.append("marker")
   .attr("orient", "auto")
   .append("path")
   .attr("d", "M0,-5L10,0L0,5")
-  .attr("fill", "#e0e0e0");
+  .attr("fill", isDark ? "#484545":"#2D2C2C" );
+
 // 高亮箭头
 defs.append("marker")
   .attr("id", "arrow-highlight")
@@ -83,22 +87,18 @@ defs.append("marker")
   .attr("orient", "auto")
   .append("path")
   .attr("d", "M0,-5L10,0L0,5")
-  .attr("fill", "#78909C");
+  .attr("fill", isDark?"#FFFFFF":"#78909C");
 
   // 验证数据
 if (!graphData || !graphData.nodes || !graphData.links) {
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height / 2)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#f00")
-    .text("错误：无效的图谱数据");
+  Swal.fire({
+  icon: 'error',
+  title: '无效的图谱数据',
+  text: error.message
+});
   return;
 }
-
-
   currentData = graphData;
-
   // 创建力导向图模拟
  const simulation = d3.forceSimulation(graphData.nodes)
   .force("link", d3.forceLink(graphData.links)
@@ -119,7 +119,7 @@ const link = container.append("g")
   .data(graphData.links)
   .enter()
   .append("line")
-  .attr("stroke", "rgba(120,120,120,0.3)")
+  .attr("stroke", isDark?"#D4D4D4":"rgba(120,120,120,0.3)")
   .attr("stroke-width", 0.8)
   .attr("marker-end", "url(#arrow-normal)"); // 初始使用普通箭头
 
@@ -133,7 +133,7 @@ const link = container.append("g")
     .append("text")
     .text(d => d.label)
     .attr("font-size", 10)
-    .attr("fill", "#666");
+    .attr("fill", isDark?"#D4D4D4":"#666");
   // 画节点圆圈
 const node = container.append("g")
   .selectAll("circle")
@@ -168,14 +168,11 @@ const label = container.append("g")
   .attr("font-size", 11)
   .attr("dx", 25)                          // 更近的标签距离
   .attr("dy", ".3em")
-  .attr("fill", "#222")                    // 更深的文字颜色
+  .attr("fill", isDark?"#D4D4D4":"#222")               // 更深的文字颜色
   .attr("font-weight", "bold")             // 加粗
   .attr("paint-order", "stroke")           // 文字描边（提高可读性）
-  .attr("stroke", "white")
+  .attr("stroke", isDark?"#000000":"white")
   .attr("stroke-width", 1);
-
-
-
 
   // 模拟更新函数
   simulation.on("tick", () => {
@@ -222,7 +219,7 @@ node
     // 更新连线和箭头
     link
       .attr("stroke", rel =>
-        rel.source.id === d.id || rel.target.id === d.id ? "#78909C" : "#e0e0e0"
+       isDark?(rel.source.id === d.id || rel.target.id === d.id ? "#e0e0e0":"#222222"):(rel.source.id === d.id || rel.target.id === d.id ? "#78909C" : "#e0e0e0")
       )
       .attr("marker-end", rel =>
         rel.source.id === d.id || rel.target.id === d.id
@@ -234,7 +231,7 @@ node
     // 恢复默认状态
     node.attr("opacity", 1);
     link
-      .attr("stroke", "rgba(120,120,120,0.3)")
+      .attr("stroke", isDark?"#D4D4D4":"rgba(120,120,120,0.3)")
       .attr("marker-end", "url(#arrow-normal)");
   });
   // 拖拽函数
