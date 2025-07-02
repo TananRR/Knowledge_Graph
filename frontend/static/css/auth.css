@@ -50,7 +50,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle, #e0fbe2, #d6f6de, #cdf0da, #c3ebd6, #bae5d3, #b1e0d0, #a9dcce, #a0d7cc, #97d1ca, #8eccc7, #85c6c5, #7dc0c3);
+    background: radial-gradient(circle, #cdf0da, #c3ebd6, #bae5d3, #b1e0d0, #a9dcce, #a0d7cc, #97d1ca, #8eccc7, #85c6c5, #7dc0c3);
     padding: 20px;
 }
 .auth-container2 {

@@ -5,7 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 知识图谱系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="static/css/auth.css">
+
+    <style>
+        /* 全新设计的极简清新弹窗 */
+        #messageModal .modal-dialog {
+            max-width: 380px;
+        }
+        #messageModal .modal-content {
+            border: none;
+            border-radius: 16px; /* 更大的圆角 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            background: #ffffff;
+        }
+        #messageModal .modal-header {
+            border-bottom: none;
+            padding: 24px 24px 8px;
+            background: transparent;
+        }
+        #messageModal .modal-title {
+            font-weight: 500;
+            color: #333;
+            font-size: 1.1rem;
+            text-align: center;
+            width: 100%;
+        }
+        #messageModal .modal-body {
+            padding: 8px 24px;
+            color: #666;
+            text-align: center;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        #messageModal .modal-footer {
+            border-top: none;
+            padding: 16px 24px 24px;
+            background: transparent;
+            justify-content: center;
+        }
+        #messageModal .btn-close {
+            display: none;
+        }
+        #messageModal .btn-confirm {
+            background: #f0f4ff;
+            border: none;
+            color: #4a6bff;
+            padding: 8px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+        #messageModal .btn-confirm:hover {
+            background: #e0e8ff;
+            transform: translateY(-1px);
+        }
+        #messageModal .btn-confirm:active {
+            transform: translateY(0);
+        }
+
+        /* 添加淡入淡出动画 */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease;
+            transform: translateY(20px) scale(0.98);
+            opacity: 0;
+        }
+        .modal.show .modal-dialog {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
 
@@ -33,7 +104,7 @@
 
                 <div class="form-group">
                     <label for="loginPassword" class="form-label">密码</label>
-                    <input type="password" id="loginPassword" class="form-control" placeholder="请输入密码" required>
+                   <input type="password" id="loginPassword" class="form-control" placeholder="请输入密码" required minlength="8">
                     <div class="error-message d-none" id="passwordError"></div>
                 </div>
 
@@ -62,6 +133,16 @@
     <script>
 
         document.addEventListener('DOMContentLoaded', function() {
+        // 初始化弹窗
+const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+
+// 显示消息的函数
+function showMessage(title, message) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    messageModal.show();
+}
+
         // 垂直打字动画
         const textLeft = "欢 迎 来 到";
         const textRight = "知 识 图 谱";
@@ -127,15 +208,15 @@
             }
 
             // 密码验证
-            if (!password) {
-                document.getElementById('passwordError').textContent = '请输入密码';
-                document.getElementById('passwordError').classList.remove('d-none');
-                isValid = false;
-            } else if (password.length < 6) {
-                document.getElementById('passwordError').textContent = '密码长度至少为6位';
-                document.getElementById('passwordError').classList.remove('d-none');
-                isValid = false;
-            }
+            // 密码验证
+if (!password) {
+    showMessage('提示', '请输入密码');
+    isValid = false;
+} else if (password.length < 6) {
+    showMessage('提示', '密码长度至少为6位');
+    isValid = false;
+}
+
 
             // 如果验证通过，发送登录请求
             if (isValid) {
@@ -203,5 +284,22 @@
     });
 
     </script>
+<!-- 极简白色弹窗 -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="modalTitle">提示</h6>
+            </div>
+            <div class="modal-body" id="modalMessage">
+                <!-- 消息内容将在这里显示 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-confirm" data-bs-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
