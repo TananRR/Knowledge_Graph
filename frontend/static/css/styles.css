@@ -82,6 +82,10 @@ svg {
     display: flex;
     flex-direction: column;
     gap: 15px;
+     transform: translateX(0);
+    opacity: 1;
+    transition: transform 0.6s ease, opacity 1s ease;
+    will-change: transform, opacity;
 }
 
 .toolbar-card {
@@ -472,4 +476,12 @@ svg {
     display: block;
     position: relative;  /* 确保 z-index 生效 */
     z-index: 1;  /* 高于粒子层 */
+}
+
+#main-toolbar.collapsed {
+    transform: translateX(-280px);
+    opacity: 0;
+    pointer-events: none;
+    transition: var(--transition);
+
 }
