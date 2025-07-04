@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>知识图谱可视化演示</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -22,16 +22,22 @@
         <button class="tab-button" data-target="setting-tab"><i class="fas fa-cog"></i> 设置</button>
     </div>
 
-     <div id="tab-content">
+    <div id="tab-content">
         <div class="toolbar-card tab-panel active" id="search-tab">
             <!-- 原查询部分 -->
             <div class="toolbar-section">
                 <div class="section-title"><i class="fas fa-search"></i> 节点查询</div>
-                <input type="text" id="searchInput" placeholder="输入关键词搜索..." />
+                <input type="text" id="searchInput" placeholder="输入关键词搜索..."/>
                 <button onclick="handleSearch()" class="success"><i class="fas fa-search"></i> 查询节点</button>
                 <button onclick="loadSelectedGraph()" class="secondary" style="margin-top: 12px;">
                     <i class="fas fa-times-circle"></i> 取消聚焦
                 </button>
+                <div class="section-title"><i class="fas fa-search"></i> 知识查询</div>
+                <button class="success" id="knowledge-query-btn" style="margin-top:12px">
+                    <i class="fas fa-robot"></i> 查询知识
+                </button>
+
+
             </div>
         </div>
 
@@ -44,7 +50,7 @@
                         <i class="fas fa-cloud-upload-alt"></i>
                         <span>点击选择文件或拖放至此</span>
                     </label>
-                    <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx,.json" />
+                    <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx,.json"/>
                     <div class="file-upload-name" id="file-name"></div>
                 </div>
                 <button onclick="handleUpload()">
@@ -64,7 +70,8 @@
             </div>
             <div class="toolbar-section">
                 <button class="danger" onclick="handleDeleteGraph()"><i class="fas fa-trash"></i> 删除当前图谱</button>
-                <button class="danger" onclick="handleDeleteByUser()"><i class="fas fa-trash-alt"></i> 删除全部图谱</button>
+                <button class="danger" onclick="handleDeleteByUser()"><i class="fas fa-trash-alt"></i> 删除全部图谱
+                </button>
             </div>
         </div>
 
@@ -88,13 +95,13 @@
             <!-- 粒子开关 -->
             <div class="toolbar-section">
                 <div class="section-title"><i class="fas fa-star"></i> 粒子特效</div>
-                 <button onclick="toggleParticles()">
-                <i class="fas fa-star"></i>
-                <span id="particleToggleText">关闭粒子效果</span>
-            </button>
-            <button onclick="adjustParticles()" style="margin-top: 12px;">
-                <i class="fas fa-sliders-h"></i> 调整粒子数量
-            </button>
+                <button onclick="toggleParticles()">
+                    <i class="fas fa-star"></i>
+                    <span id="particleToggleText">关闭粒子效果</span>
+                </button>
+                <button onclick="adjustParticles()" style="margin-top: 12px;">
+                    <i class="fas fa-sliders-h"></i> 调整粒子数量
+                </button>
             </div>
         </div>
     </div>
@@ -162,33 +169,42 @@
         Work (作品)
     </div>
 </div>
+ <!-- 全屏助手浮层 -->
+                <div id="assistant-overlay" class="hidden">
+                    <div id="assistant-modal">
+                        <div id="assistant-avatar"></div>
+                        <input type="text" id="assistant-input" placeholder="请描述你想了解的知识..."/>
+                        <button id="assistant-send-btn"><i class="fas fa-paper-plane"></i> 发送</button>
+                        <button id="assistant-close-btn"><i class="fas fa-times"></i> 关闭</button>
+                    </div>
+                </div>
 
 <script type="module" src="./js/app.js"></script>
 <script>
-// 粒子配置
-const particlesConfig = {
-    particles: {
-        number: { value: 80, density: { enable: true, value_area: 800 } },
-        color: { value: "#ffffff" },
-        shape: { type: "circle" },
-        opacity: { random: true, value: 0.5 },
-        size: { random: true, value: 3 },
-        line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
-        move: { enable: true, speed: 2, direction: "none", random: true, straight: false, out_mode: "out" }
-    },
-    interactivity: {
-        detect_on: "canvas",
-        events: {
-            onhover: { enable: true, mode: "grab" },
-            onclick: { enable: true, mode: "push" }
+    // 粒子配置
+    const particlesConfig = {
+        particles: {
+            number: { value: 80, density: { enable: true, value_area: 800 } },
+            color: { value: "#ffffff" },
+            shape: { type: "circle" },
+            opacity: { random: true, value: 0.5 },
+            size: { random: true, value: 3 },
+            line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+            move: { enable: true, speed: 2, direction: "none", random: true, straight: false, out_mode: "out" }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: { enable: true, mode: "grab" },
+                onclick: { enable: true, mode: "push" }
+            }
         }
-    }
-};
+    };
 
-// 初始化粒子
-document.addEventListener('DOMContentLoaded', () => {
-    particlesJS('particles-js', particlesConfig);
-});
+    // 初始化粒子
+    document.addEventListener('DOMContentLoaded', () => {
+        particlesJS('particles-js', particlesConfig);
+    });
 </script>
 </body>
 </html>
