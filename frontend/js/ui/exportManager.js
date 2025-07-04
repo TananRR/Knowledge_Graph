@@ -50,6 +50,9 @@ export class ExportManager {
           this.exportJSON()
             .catch(error => this.showExportError('JSON', error));
           break;
+           case 'share-graph-btn':
+        this.generateGraphIdShareLink();
+        break;
       }
 
       // 点击后关闭菜单
@@ -90,4 +93,20 @@ export class ExportManager {
       throw error;
     }
   }
+  generateGraphIdShareLink() {
+  const graphId = this.graphHandlers.currentGraphId;
+  if (!graphId || graphId === "all") {
+    Swal.fire("分享失败", "请选择一个具体图谱后再分享", "warning");
+    return;
+  }
+
+  const shareUrl = `${window.location.origin}/public_graph.html?graph_id=${graphId}`;
+  navigator.clipboard.writeText(shareUrl)
+    .then(() => {
+      Swal.fire("分享链接已复制", shareUrl, "success");
+    })
+    .catch(() => {
+      Swal.fire("复制失败", "请手动复制链接：" + shareUrl, "error");
+    });
+}
 }

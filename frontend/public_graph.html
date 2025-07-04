@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>共享图谱查看</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(circle, #e6f1f2, #d1e8ed, #bddeea, #aad4e9, #9bc9e8);
+    }
+    svg {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <svg></svg>
+  <script type="module">
+    import { GraphRenderer } from './js/graph/graphRenderer.js';
+    import { fetchGraphData } from './js/api.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const graphId = urlParams.get("graph_id");
+
+    if (!graphId) {
+      Swal.fire("错误", "链接中缺少 graph_id 参数", "error");
+      throw new Error("缺少 graph_id 参数");
+    }
+
+    const renderer = new GraphRenderer();
+
+    fetchGraphData(graphId)
+      .then(data => {
+        renderer.renderGraph(data);
+      })
+      .catch(err => {
+        console.error("加载失败", err);
+        Swal.fire("图谱加载失败", err.message || "请检查图谱ID是否正确", "error");
+      });
+  </script>
+</body>
+</html>
