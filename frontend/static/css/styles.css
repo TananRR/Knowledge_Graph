@@ -559,11 +559,13 @@ svg {
   font-size: 14px;
   padding: 6px 10px;
 }
-.rounded-swal {
-  border-radius: 18px !important;   /* 圆角大小，可改成 12px / 24px */
+.swal2-popup.rounded-swal {
+  border-radius: 18px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background-color: #fff;
 }
+
 
 
 
