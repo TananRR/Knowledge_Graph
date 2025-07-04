@@ -250,7 +250,8 @@ console.log(`[GraphRenderer ${this.id}] 当前节点数:`, graphData?.nodes?.len
   setupMouseInteractions() {
     this.nodeRef
       .on("mouseover", this.handleNodeMouseOver.bind(this))
-      .on("mouseout", this.handleNodeMouseOut.bind(this));
+      .on("mouseout", this.handleNodeMouseOut.bind(this))
+      .on("click", this.handleNodeClick.bind(this));
   }
 
   /**
@@ -461,6 +462,30 @@ resetElementStyles() {
     d3.select("svg").selectAll("*").remove();
     this.currentData = null;
   }
+ /**
+   * 点击节点
+   */
+   handleNodeClick(event, node) {
+  Swal.fire({
+    title: `节点详情 - ${node.name}`,
+    html: `
+      <p><strong>ID:</strong> ${node.id}</p>
+      <p><strong>类型:</strong> ${node.type}</p>
+// TODO: 后期在这里补充具体数据
+    `,
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: "删除该节点",
+    denyButtonText: "添加连接节点",
+    cancelButtonText: "关闭",
+    preConfirm: () => {
+      this.deleteNode(node);
+    },
+    preDeny: () => {
+      this.promptAddNeighbor(node);
+    }
+  });
+}
 
   /**
    * 显示空状态消息

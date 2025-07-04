@@ -9,7 +9,9 @@ import {
   deleteGraphsByUser,
   fetchUserGraphIds,
   fetchUserGraphs,
-  deleteUser
+  deleteUser,
+  deleteNode,
+  addNode
 } from '../api.js';
 
 export class GraphHandlers {

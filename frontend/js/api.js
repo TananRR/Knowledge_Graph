@@ -121,3 +121,20 @@ export async function downloadGraphJSON(graphId) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+export async function deleteNode(graphId, nodeId) {
+  const resp = await fetch(`${BASE_URL}/delete_node/?graph_id=${graphId}&node_id=${nodeId}`, {
+    method: "DELETE"
+  });
+  return handleResponse(resp);
+}
+
+export async function addNode(graphId, newNode, link) {
+  const resp = await fetch(`${BASE_URL}/add_node/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ graph_id: graphId, new_node: newNode, link })
+  });
+  return handleResponse(resp);
+}
+
