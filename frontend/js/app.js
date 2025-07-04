@@ -31,8 +31,10 @@ console.log("注册 renderer 实例 ID:", graphRenderer.id);
   try {
     const graphIds = await graphHandlers.loadGraphList(userId);
     if (graphIds.length > 0) {
-      // 如果有图谱，加载最后一个图谱
-      await graphHandlers.loadGraphById(graphIds[graphIds.length - 1]);
+      const lastGraphId = graphIds[graphIds.length - 1];
+
+  graphHandlers.currentGraphId = lastGraphId;  // ✅ 明确设置当前图谱 ID
+  await graphHandlers.loadGraphById(lastGraphId);
     } else {
       // 如果没有图谱，显示提示信息
       Swal.fire({
@@ -98,8 +100,8 @@ window.adjustParticles = async () => {
     confirmButtonText: '确认',
     cancelButtonText: '取消',
     customClass: {
-      validationMessage: 'my-validation-message',
-      popup: 'rounded-swal'  // 👈 给整个弹窗添加自定义类
+     popup: 'rounded-swal', // ✅ 添加自定义类名
+     validationMessage: 'my-validation-message'
     },
     preConfirm: (value) => {
       if (!value) {
