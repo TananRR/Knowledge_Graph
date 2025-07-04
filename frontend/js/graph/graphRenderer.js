@@ -479,66 +479,95 @@ resetElementStyles() {
   /**
    * 导出图谱为PNG
    */
-  async exportPNG() {
-    try {
-      const svg = document.querySelector("svg");
-      if (!svg) throw new Error("未找到SVG元素");
-
-      // 克隆SVG并设置必要的属性
-      const clonedSvg = svg.cloneNode(true);
-      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      clonedSvg.setAttribute('width', svg.clientWidth);
-      clonedSvg.setAttribute('height', svg.clientHeight);
-
-      // 添加白色背景
-      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bgRect.setAttribute('width', '100%');
-      bgRect.setAttribute('height', '100%');
-      bgRect.setAttribute('fill', 'white');
-      clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
-
-      // 创建canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = svg.clientWidth * 2;  // 2倍分辨率
-      canvas.height = svg.clientHeight * 2;
-      const ctx = canvas.getContext('2d');
-
-      // 设置白色背景
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // 将SVG转换为数据URL
-      const svgData = new XMLSerializer().serializeToString(clonedSvg);
-      const img = new Image();
-      const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-      const url = URL.createObjectURL(svgBlob);
-
-      // 等待图片加载
-      await new Promise((resolve, reject) => {
-        img.onload = () => {
-          // 绘制到canvas
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error('图片加载失败'));
-        };
-        img.src = url;
-      });
-
-      // 触发下载
-      const link = document.createElement('a');
-      link.download = `knowledge-graph-${new Date().toISOString().slice(0,10)}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-
-    } catch (error) {
-      console.error('PNG导出失败:', error);
-      throw error;
-    }
+async exportPNG() {
+  const { value: scale } = await Swal.fire({
+  title: "请选择导出尺寸",
+  input: "select",
+  inputOptions: {
+    1: "标准（1x）",
+    2: "高清（2x）",
+    4: "超清（4x）"
+  },
+  inputValue: 2,
+  confirmButtonText: "导出 PNG",
+  showCancelButton: true,
+  cancelButtonText: "取消",
+  customClass: {
+    input: "swal-scale-select",
+    popup: 'rounded-swal'  // 👈 给整个弹窗添加自定义类
   }
+});
+
+
+  if (scale) {
+    await this.exportPNGWithScale(parseInt(scale));
+  }
+}
+
+
+async exportPNGWithScale(scale = 2) {
+  try {
+    const svg = document.querySelector("svg");
+    const g = svg.querySelector("g");
+    if (!svg || !g) throw new Error("未找到 SVG 或 <g>");
+
+    const transform = g.getCTM();
+    const bbox = g.getBBox();
+    const padding = 40;
+
+    const minX = transform.a * bbox.x + transform.e - padding;
+    const minY = transform.d * bbox.y + transform.f - padding;
+    const width = transform.a * bbox.width + 2 * padding;
+    const height = transform.d * bbox.height + 2 * padding;
+
+    const clonedSvg = svg.cloneNode(true);
+    clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clonedSvg.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
+    clonedSvg.setAttribute("width", width);
+    clonedSvg.setAttribute("height", height);
+
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", minX);
+    bg.setAttribute("y", minY);
+    bg.setAttribute("width", width);
+    bg.setAttribute("height", height);
+    bg.setAttribute("fill", "white");
+    clonedSvg.insertBefore(bg, clonedSvg.firstChild);
+
+    const svgData = new XMLSerializer().serializeToString(clonedSvg);
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d");
+
+    await new Promise((resolve, reject) => {
+      img.onload = () => {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("图片加载失败"));
+      };
+      img.src = url;
+    });
+
+    const link = document.createElement("a");
+    link.download = `knowledge-graph-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  } catch (error) {
+    console.error("PNG导出失败:", error);
+    throw error;
+  }
+}
 
   /**
    * 导出图谱为SVG
