@@ -111,7 +111,7 @@
 <div class="export-dropdown">
     <button class="export-btn" id="export-btn">
         <i class="fas fa-download"></i>
-        <span>导出数据</span>
+        <span>导出与分享</span>
         <i class="fas fa-chevron-down"></i>
     </button>
     <div class="export-options" id="exportOptions">
@@ -127,6 +127,10 @@
             <i class="fas fa-file-image"></i>
             <span>导出SVG矢量图</span>
         </button>
+        <button id="share-graph-btn">
+            <i class="fas fa-share-alt"></i> 分享图谱链接
+        </button>
+
     </div>
 </div>
 
@@ -169,15 +173,15 @@
         Work (作品)
     </div>
 </div>
- <!-- 全屏助手浮层 -->
+<!-- 全屏助手浮层 -->
 <div id="assistant-overlay" class="hidden">
-                    <div id="assistant-modal">
-                        <div id="assistant-avatar"></div>
-                        <input type="text" id="assistant-input" placeholder="请描述你想了解的知识..."/>
-                        <button id="assistant-send-btn"><i class="fas fa-paper-plane"></i> 发送</button>
-                        <button id="assistant-close-btn"><i class="fas fa-times"></i> 关闭</button>
-                    </div>
-                </div>
+    <div id="assistant-modal">
+        <div id="assistant-avatar"></div>
+        <input type="text" id="assistant-input" placeholder="请描述你想了解的知识..."/>
+        <button id="assistant-send-btn"><i class="fas fa-paper-plane"></i> 发送</button>
+        <button id="assistant-close-btn"><i class="fas fa-times"></i> 关闭</button>
+    </div>
+</div>
 
 <script type="module" src="./js/app.js"></script>
 <script>
