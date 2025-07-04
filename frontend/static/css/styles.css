@@ -551,5 +551,20 @@ svg {
         opacity: 1;
     }
 }
+.swal-scale-select {
+  max-width: 150px;
+  width: 90%;
+  margin: 0 auto;
+  display: block;
+  font-size: 14px;
+  padding: 6px 10px;
+}
+.rounded-swal {
+  border-radius: 18px !important;   /* 圆角大小，可改成 12px / 24px */
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+
 
 

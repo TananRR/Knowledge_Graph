@@ -98,7 +98,8 @@ window.adjustParticles = async () => {
     confirmButtonText: '确认',
     cancelButtonText: '取消',
     customClass: {
-      validationMessage: 'my-validation-message'
+      validationMessage: 'my-validation-message',
+      popup: 'rounded-swal'  // 👈 给整个弹窗添加自定义类
     },
     preConfirm: (value) => {
       if (!value) {
