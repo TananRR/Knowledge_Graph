@@ -1,9 +1,9 @@
 
 import colorManager from '../theme/colorThemeManager.js';
-import { deleteNode, addNode } from '../api.js';
-
+import{ deleteNode,addNode} from '../api.js';
 export class GraphRenderer {
-  constructor() {
+   constructor(graphHandlers) {
+  this.graphHandlers = graphHandlers;
   this.id = Math.random().toString(36).slice(2, 8);  // ✅ 随机 ID
   console.log("[GraphRenderer] 实例创建，ID =", this.id);
     this.colorManager = colorManager;
@@ -464,8 +464,33 @@ resetElementStyles() {
     this.currentData = null;
   }
 
-  // 🔽 添加这里：持久化删除节点方法
-  async deleteNode(node) {
+
+   /**
+   * 点击节点
+   */
+handleNodeClick(event, node) {
+  const self = this;
+
+  Swal.fire({
+    title: `节点详情 - ${node.name}`,
+    html: `
+      <p><strong>ID:</strong> ${node.id}</p>
+      <p><strong>类型:</strong> ${node.type}</p>
+    `,
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: "删除该节点",
+    denyButtonText: "添加连接节点",
+    cancelButtonText: "关闭",
+    preConfirm: () => {
+      return self.deleteNode(node);
+    },
+    preDeny: () => {
+      return self.promptAddNeighbor(node);
+    }
+  });
+}
+ async deleteNode(node) {
   const confirm = await Swal.fire({
     title: `确定删除节点 "${node.name}" 吗？`,
     text: "此操作将删除该节点及其所有关联关系，且无法恢复！",
@@ -502,7 +527,7 @@ async promptAddNeighbor(node) {
     html: `
       <input id="node-name" class="swal2-input" placeholder="新节点名称">
       <input id="node-type" class="swal2-input" placeholder="节点类型">
-      <input id="relation-label" class="swal2-input" placeholder="关系类型（来自、包含、属于、同现）">
+      <input id="relation-label" class="swal2-input" placeholder="关系类型（例如来自、包含等）">
     `,
     focusConfirm: false,
     showCancelButton: true,
@@ -545,43 +570,13 @@ console.log("📦 addNode 请求数据：", {
 
   try {
     await addNode(this.currentGraphId, newNode, newLink);
-    this.currentData.nodes.push(newNode);
-    this.currentData.links.push(newLink);
-    this.renderGraph(this.currentData);
+    // ✅ 推荐方式：重新加载整个图谱（包括后端实际生成的 node_id）
+    await this.graphHandlers.loadGraphById(this.currentGraphId);
+
   } catch (err) {
     Swal.fire("添加失败", err.message || "后端错误", "error");
   }
 }
-
-
-
-
-   /**
-   * 点击节点
-   */
-handleNodeClick(event, node) {
-  const self = this;
-
-  Swal.fire({
-    title: `节点详情 - ${node.name}`,
-    html: `
-      <p><strong>ID:</strong> ${node.id}</p>
-      <p><strong>类型:</strong> ${node.type}</p>
-    `,
-    showCancelButton: true,
-    showDenyButton: true,
-    confirmButtonText: "删除该节点",
-    denyButtonText: "添加连接节点",
-    cancelButtonText: "关闭",
-    preConfirm: () => {
-      return self.deleteNode(node);
-    },
-    preDeny: () => {
-      return self.promptAddNeighbor(node);
-    }
-  });
-}
-
   /**
    * 显示空状态消息
    */

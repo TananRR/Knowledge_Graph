@@ -8,10 +8,10 @@ import { ExportManager } from './ui/exportManager.js';
 import { initThemeSystem, toggleTheme, registerRenderer } from './theme/themeInit.js';
 
 // 创建 GraphRenderer 实例
-const graphRenderer = new GraphRenderer();
+const graphRenderer = new GraphRenderer(null); // 先传 null 占位
 
-// 创建 GraphHandlers 实例并传入 graphRenderer
 const graphHandlers = new GraphHandlers(graphRenderer);
+graphRenderer.graphHandlers = graphHandlers; // ✅ 互相引用
 
 // 注册 graphRenderer 到 themeInit
 registerRenderer(graphRenderer);
