@@ -476,4 +476,7 @@ allResults.forEach(item => {
     }
     await downloadGraphJSON(this.currentGraphId);
   }
+    // 🔽 添加这里：持久化删除节点方法
+
+
 }
