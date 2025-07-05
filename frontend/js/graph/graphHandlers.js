@@ -270,7 +270,7 @@ async handleSearch() {
     const response = await searchNodes(keyword);
     await loading.close();
 
-    const allResults = response.results || [];
+    const allResults = response|| [];
     const currentGraphId = this.renderer.currentGraphId;
     console.log("当前搜索图谱 ID：", currentGraphId);
     console.log("搜索结果（含图谱ID）:");

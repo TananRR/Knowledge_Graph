@@ -130,11 +130,32 @@ export async function deleteNode(graphId, nodeId) {
 }
 
 export async function addNode(graphId, newNode, link) {
+  const payload = {
+    graph_id: graphId,
+    source_node_id: link.source,
+    link: link.label,
+    new_node: {
+      name: newNode.name,
+      type: newNode.type || "Entity",
+      similarity: newNode.similarity || 1.0,
+      user_id: newNode.user_id || "anonymous",
+      verb: newNode.verb || link.label
+    }
+  };
+
   const resp = await fetch(`${BASE_URL}/add_node/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ graph_id: graphId, new_node: newNode, link })
+    body: JSON.stringify(payload)
   });
-  return handleResponse(resp);
+
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.message || "请求失败");
+  }
+
+  return resp.json();
 }
+
+
 

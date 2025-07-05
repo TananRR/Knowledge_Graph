@@ -479,7 +479,7 @@ resetElementStyles() {
   if (!confirm.isConfirmed) return;
 
   try {
-    await deleteNodeAPI(this.currentGraphId, node.id);  // ⚠️ 如果你重命名了 API 函数
+    await deleteNode(this.currentGraphId, node.id);
     this.currentData.nodes = this.currentData.nodes.filter(n => n.id !== node.id);
     this.currentData.links = this.currentData.links.filter(
       l => l.source.id !== node.id && l.target.id !== node.id
@@ -491,18 +491,18 @@ resetElementStyles() {
   }
 }
 
-
-  async promptAddNeighbor(node) {
+//TODO 选择源节点
+//      <select id="source-choice" class="swal2-input" style="margin-top:12px;height: 2.625em;width:72%; padding: 0 0.75em; font-size: 1.125em;">
+//        <option value="current" selected>以当前节点为源</option>
+//        <option value="new">以新节点为源</option>
+//      </select>
+async promptAddNeighbor(node) {
   const { value: formValues } = await Swal.fire({
     title: "添加新节点并连接",
     html: `
       <input id="node-name" class="swal2-input" placeholder="新节点名称">
-<input id="relation-label" class="swal2-input" placeholder="关系名称（如 属于、相关于）">
-<select id="source-choice" class="swal2-input" style="margin-top:12px;height: 2.625em;width:72%; padding: 0 0.75em; font-size: 1.125em;">
-  <option value="current" selected>以当前节点为源</option>
-  <option value="new">以新节点为源</option>
-</select>
-
+      <input id="node-type" class="swal2-input" placeholder="节点类型">
+      <input id="relation-label" class="swal2-input" placeholder="关系名称（如 属于、相关于）">
     `,
     focusConfirm: false,
     showCancelButton: true,
@@ -510,13 +510,13 @@ resetElementStyles() {
     cancelButtonText: "取消",
     preConfirm: () => {
       const name = document.getElementById("node-name").value.trim();
+      const type = document.getElementById("node-type").value.trim();
       const label = document.getElementById("relation-label").value.trim();
-      const sourceChoice = document.getElementById("source-choice").value;
-      if (!name || !label) {
-        Swal.showValidationMessage("请填写节点名称和关系名");
+      if (!name || !label || !type) {
+        Swal.showValidationMessage("请填写节点名称、类型和关系名");
         return false;
       }
-      return { name, label, sourceChoice };
+      return { name, label, type };
     }
   });
 
@@ -525,17 +525,23 @@ resetElementStyles() {
   const newNode = {
     id: `node_${Date.now()}`,
     name: formValues.name,
-    type: "Concept"
+    type: formValues.type || "Concept",
+    similarity: 1.0,
+    user_id: this.currentUserId || "anonymous",
+    verb: formValues.label
   };
-
-  const sourceId = formValues.sourceChoice === "current" ? node.id : newNode.id;
-  const targetId = formValues.sourceChoice === "current" ? newNode.id : node.id;
 
   const newLink = {
-    source: sourceId,
-    target: targetId,
+    source: node.id,
+    target: newNode.id,
     label: formValues.label
   };
+console.log("📦 addNode 请求数据：", {
+  graph_id: this.currentGraphId,
+  source_node_id: newLink.source,
+  link: newLink.label,
+  new_node: newNode
+});
 
   try {
     await addNode(this.currentGraphId, newNode, newLink);
@@ -546,6 +552,8 @@ resetElementStyles() {
     Swal.fire("添加失败", err.message || "后端错误", "error");
   }
 }
+
+
 
 
    /**
