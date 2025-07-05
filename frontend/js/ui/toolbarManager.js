@@ -35,40 +35,48 @@ export class ToolbarManager {
   }
 
   initAutoCollapse() {
-    const toolbar = document.getElementById("main-toolbar");
-    let hideTimer = null;
+  const toolbar = document.getElementById("main-toolbar");
+  let hideTimer = null;
 
-    const collapseToolbar = () => {
-      toolbar.classList.add("collapsed");
-    };
+  const collapseToolbar = () => {
+    toolbar.classList.add("collapsed");
+  };
 
-    const expandToolbar = () => {
-      toolbar.classList.remove("collapsed");
-      resetTimer();
-    };
+  const expandToolbar = () => {
+    toolbar.classList.remove("collapsed");
+  };
 
-    const resetTimer = () => {
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
-        collapseToolbar();
-      }, 5000);
-    };
+  const resetTimer = () => {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      collapseToolbar();
+    }, 5000);
+  };
 
-    // 鼠标移入工具栏：展开 + 重置计时
-    toolbar.addEventListener("mouseenter", expandToolbar);
+  // 鼠标移入工具栏：展开 + 停止计时
+  toolbar.addEventListener("mouseenter", () => {
+    expandToolbar();
+    clearTimeout(hideTimer);  // 停止收起
+  });
 
-    // 鼠标移动靠近屏幕左边也展开
-    document.addEventListener("mousemove", (e) => {
-      const isNearLeft = e.clientX < 50;
-      const isInsideToolbar = toolbar.contains(e.target);
-      if (isNearLeft || isInsideToolbar) {
-        expandToolbar();
-      }
-    });
-
-    // 初始也设定一次
+  // 鼠标移出工具栏：重设计时器
+  toolbar.addEventListener("mouseleave", () => {
     resetTimer();
-  }
+  });
+
+  // 鼠标靠近左侧屏幕边缘也展开
+  document.addEventListener("mousemove", (e) => {
+    const isNearLeft = e.clientX < 50;
+    if (isNearLeft) {
+      expandToolbar();
+      resetTimer(); // 鼠标靠近时也重置倒计时
+    }
+  });
+
+  // 页面初始启动时，5 秒后收起
+  resetTimer();
+}
+
   initAssistantOverlay() {
   const overlay = document.getElementById("assistant-overlay");
   const openBtn = document.getElementById("knowledge-query-btn");

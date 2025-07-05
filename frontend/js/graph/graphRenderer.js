@@ -1,5 +1,6 @@
 
 import colorManager from '../theme/colorThemeManager.js';
+import { deleteNode, addNode } from '../api.js';
 
 export class GraphRenderer {
   constructor() {
@@ -462,16 +463,102 @@ resetElementStyles() {
     d3.select("svg").selectAll("*").remove();
     this.currentData = null;
   }
- /**
+
+  // 🔽 添加这里：持久化删除节点方法
+  async deleteNode(node) {
+  const confirm = await Swal.fire({
+    title: `确定删除节点 "${node.name}" 吗？`,
+    text: "此操作将删除该节点及其所有关联关系，且无法恢复！",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "确认删除",
+    cancelButtonText: "取消",
+    reverseButtons: true
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  try {
+    await deleteNodeAPI(this.currentGraphId, node.id);  // ⚠️ 如果你重命名了 API 函数
+    this.currentData.nodes = this.currentData.nodes.filter(n => n.id !== node.id);
+    this.currentData.links = this.currentData.links.filter(
+      l => l.source.id !== node.id && l.target.id !== node.id
+    );
+    this.renderGraph(this.currentData);
+    Swal.fire("已删除", `节点 "${node.name}" 已成功删除`, "success");
+  } catch (err) {
+    Swal.fire("删除失败", err.message || "发生未知错误", "error");
+  }
+}
+
+
+  async promptAddNeighbor(node) {
+  const { value: formValues } = await Swal.fire({
+    title: "添加新节点并连接",
+    html: `
+      <input id="node-name" class="swal2-input" placeholder="新节点名称">
+<input id="relation-label" class="swal2-input" placeholder="关系名称（如 属于、相关于）">
+<select id="source-choice" class="swal2-input" style="margin-top:12px;height: 2.625em;width:72%; padding: 0 0.75em; font-size: 1.125em;">
+  <option value="current" selected>以当前节点为源</option>
+  <option value="new">以新节点为源</option>
+</select>
+
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: "确认添加",
+    cancelButtonText: "取消",
+    preConfirm: () => {
+      const name = document.getElementById("node-name").value.trim();
+      const label = document.getElementById("relation-label").value.trim();
+      const sourceChoice = document.getElementById("source-choice").value;
+      if (!name || !label) {
+        Swal.showValidationMessage("请填写节点名称和关系名");
+        return false;
+      }
+      return { name, label, sourceChoice };
+    }
+  });
+
+  if (!formValues) return;
+
+  const newNode = {
+    id: `node_${Date.now()}`,
+    name: formValues.name,
+    type: "Concept"
+  };
+
+  const sourceId = formValues.sourceChoice === "current" ? node.id : newNode.id;
+  const targetId = formValues.sourceChoice === "current" ? newNode.id : node.id;
+
+  const newLink = {
+    source: sourceId,
+    target: targetId,
+    label: formValues.label
+  };
+
+  try {
+    await addNode(this.currentGraphId, newNode, newLink);
+    this.currentData.nodes.push(newNode);
+    this.currentData.links.push(newLink);
+    this.renderGraph(this.currentData);
+  } catch (err) {
+    Swal.fire("添加失败", err.message || "后端错误", "error");
+  }
+}
+
+
+   /**
    * 点击节点
    */
-   handleNodeClick(event, node) {
+handleNodeClick(event, node) {
+  const self = this;
+
   Swal.fire({
     title: `节点详情 - ${node.name}`,
     html: `
       <p><strong>ID:</strong> ${node.id}</p>
       <p><strong>类型:</strong> ${node.type}</p>
-// TODO: 后期在这里补充具体数据
     `,
     showCancelButton: true,
     showDenyButton: true,
@@ -479,10 +566,10 @@ resetElementStyles() {
     denyButtonText: "添加连接节点",
     cancelButtonText: "关闭",
     preConfirm: () => {
-      this.deleteNode(node);
+      return self.deleteNode(node);
     },
     preDeny: () => {
-      this.promptAddNeighbor(node);
+      return self.promptAddNeighbor(node);
     }
   });
 }
@@ -672,4 +759,5 @@ updateStyles() {
     .attr("fill", this.colorManager.colors.label.primary)
     .attr("stroke", this.colorManager.colors.label.stroke);
 }
+
 }

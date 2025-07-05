@@ -9,9 +9,7 @@ import {
   deleteGraphsByUser,
   fetchUserGraphIds,
   fetchUserGraphs,
-  deleteUser,
-  deleteNode,
-  addNode
+  deleteUser
 } from '../api.js';
 
 export class GraphHandlers {
@@ -77,6 +75,7 @@ export class GraphHandlers {
       if (result.status === "success") {
         Swal.fire("成功", "文件提取完成！", "success");
         this.currentGraphId = result.graph_id;
+        this.renderer.currentGraphId = result.graph_id;  // ✅ 添加这一行
         await this.loadGraphList(userId);
         const select = document.getElementById("graphSelect");
         select.value = this.currentGraphId;
@@ -251,7 +250,7 @@ async handleSearch() {
   try {
     const keyword = document.getElementById("searchInput").value.trim();
 
-    // 验证输入
+    // 1. 校验输入
     if (!keyword) {
       await Swal.fire({
         icon: 'warning',
@@ -260,55 +259,82 @@ async handleSearch() {
       return false;
     }
 
-    // 显示加载状态
-    const swalInstance = Swal.fire({
+    // 2. 显示加载状态
+    const loading = Swal.fire({
       title: '搜索中...',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
 
-    // 执行搜索
-    const results = await searchNodes(keyword);
+    // 3. 执行搜索（调用后端）
+    const response = await searchNodes(keyword);
+    await loading.close();
 
-    // 关闭加载状态
-    await swalInstance.close();
+    const allResults = response.results || [];
+    const currentGraphId = this.renderer.currentGraphId;
+    console.log("当前搜索图谱 ID：", currentGraphId);
+    console.log("搜索结果（含图谱ID）:");
+allResults.forEach(item => {
+  console.log(`• ${item.name} - graph_id: ${item.graph_id}`);
+});
 
-    // 处理无结果情况
-    if (!results.length) {
+
+    // 4. 过滤结果：当前图谱 + 名称匹配
+    const filteredResults = allResults.filter(item =>
+      item.graph_id === currentGraphId &&
+      (item.name === keyword || item.name.includes(keyword))
+    );
+
+    // 5. 没有结果
+    if (!filteredResults.length) {
       await Swal.fire({
         icon: 'info',
         title: '未找到相关实体！',
-        text: `没有找到包含"${keyword}"的实体`
+        text: `没有找到与 "${keyword}" 精确相关的实体`
       });
       return false;
     }
 
-    // 高亮匹配节点
-    const matchedIds = results.map(d => d.id);
+    // 6. 高亮匹配节点
+    const matchedIds = filteredResults.map(d => d.id);
     if (this.renderer.currentData?.nodes) {
       this.renderer.currentData.nodes.forEach(entity => {
         entity.highlight = matchedIds.includes(entity.id);
       });
 
-      // 更新节点样式
       this.renderer.nodeRef.attr("fill", d =>
-        d.highlight ? "#FFDC90" : "#009ac8");
+        d.highlight ? "#FFDC90" : "#009ac8"
+      );
 
-      // 聚焦到第一个匹配节点
-      document.getElementById("searchInput").value = results[0].name;
-      const found = this.renderer.focusNode(results[0].name);
-      document.getElementById("searchInput").value = "";
+      // 7. 构建搜索结果弹窗列表
+      const htmlList = filteredResults.map(r => `
+        <div class="search-result-item"
+             style="cursor:pointer; padding:6px; border-bottom:1px solid #eee"
+             data-name="${r.name}">
+          🔍 ${r.name}
+        </div>
+      `).join("");
 
-      // 显示成功提示
       await Swal.fire({
-        icon: 'success',
-        title: '搜索完成',
-        text: `找到 ${results.length} 个匹配实体`,
-        timer: 1500,
-        showConfirmButton: false
+        title: `找到 ${filteredResults.length} 个匹配实体`,
+        html: `<div style="text-align:left;max-height:300px;overflow:auto">${htmlList}</div>`,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: "关闭",
+        didRender: () => {
+          document.querySelectorAll(".search-result-item").forEach(item => {
+            item.addEventListener("click", () => {
+              const name = item.getAttribute("data-name");
+              this.renderer.focusNode(name); // ✅ 展示邻居也靠这
+              Swal.close();
+            });
+          });
+        }
       });
 
-      return found;
+      // 8. 清空搜索框
+      document.getElementById("searchInput").value = "";
+      return true;
     }
 
     return false;
@@ -323,6 +349,7 @@ async handleSearch() {
     return false;
   }
 }
+
 
   async loadSelectedGraph() {
     const select = document.getElementById("graphSelect");
@@ -362,9 +389,11 @@ async handleSearch() {
 
       mergedData.nodes = Array.from(nodeMap.values());
       this.currentGraphId = "all";
+      this.renderer.currentGraphId = "all";  // ✅ 保持同步
       this.renderer.renderGraph(mergedData);
     } else {
       this.currentGraphId = selectedId;
+      this.renderer.currentGraphId = selectedId;  // ✅ 添加这一行
       const graphData = await fetchGraphData(this.currentGraphId);
       this.renderer.renderGraph(graphData);
     }
