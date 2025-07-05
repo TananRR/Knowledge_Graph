@@ -6,7 +6,8 @@ from .extract import extract_text_from_file
 from .delete import delete_all_graphs, delete_graph_by_id, delete_graphs_by_user
 from .query import get_graph_by_id, get_user_graph_ids, get_graphs_by_user, get_all_graphs
 from .login import login,register,delete_user,change_password
-
+from .delete_node import delete_node
+from .add_node import add_node
 
 urlpatterns = [
     path('search/', search_entity),  # 确保这个路径存在
@@ -23,4 +24,6 @@ urlpatterns = [
     path('register/',register),
     path('delete_user/',delete_user),
     path('change_password/',change_password),
+    path('delete_node/', delete_node),  # 删除节点
+    path('add_node/', add_node),
 ]
