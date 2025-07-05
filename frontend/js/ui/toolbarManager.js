@@ -3,6 +3,7 @@ export class ToolbarManager {
     this.initTabs();
     this.initFileUpload();
     this.initGraphSelect();
+    this.initToggleButton(); // 新增
     this.initAssistantOverlay();
   }
 
@@ -66,6 +67,25 @@ export class ToolbarManager {
     }, 1500);
   });
 }
+initToggleButton() {
+  const toolbar = document.getElementById("main-toolbar");
+  const toggleBtn = document.getElementById("toolbar-toggle-btn");
+  const icon = toggleBtn.querySelector("i");
+
+  toggleBtn.addEventListener("click", () => {
+    toolbar.classList.toggle("collapsed");
+
+    // 图标方向切换
+    if (toolbar.classList.contains("collapsed")) {
+      icon.classList.remove("fa-angle-left");
+      icon.classList.add("fa-angle-right");
+    } else {
+      icon.classList.remove("fa-angle-right");
+      icon.classList.add("fa-angle-left");
+    }
+  });
+}
+
 
 
 }

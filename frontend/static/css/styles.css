@@ -77,7 +77,7 @@ svg {
 #main-toolbar {
     position: absolute;
     top: 10px;
-    left: 20px;
+    margin-left: 20px; /* ✅ 替代 left: 20px，用 margin 控制外边距更合理 */
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -480,8 +480,7 @@ svg {
 
 #main-toolbar.collapsed {
     transform: translateX(-280px);
-    opacity: 0;
-    pointer-events: none;
+      opacity: 1; /* 不隐藏，保留按钮 */
     transition: var(--transition);
 
 }
@@ -565,6 +564,33 @@ svg {
   padding: 20px;
   background-color: #fff;
 }
+
+
+/* 按钮固定在右边中间位置 */
+.toolbar-toggle-btn {
+  position: absolute;
+  top: 250px;
+  right: -33px; /* 超出主容器右边一点，贴边 */
+  transform: translateY(-50%);
+  width: 20px;
+  height: 30px;
+  border-radius: 20%;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.toolbar-toggle-btn:hover {
+  background-color: #6F5EC2;
+}
+
+.toolbar-toggle-btn i {
+  font-size: 16px;
+}
+
 
 
 
