@@ -526,7 +526,16 @@ async promptAddNeighbor(node) {
     title: "添加新节点并连接",
     html: `
       <input id="node-name" class="swal2-input" placeholder="新节点名称">
-      <input id="node-type" class="swal2-input" placeholder="节点类型">
+      <select id="node-type" class="swal2-input" style="margin-top:20px;height: 2.625em;width:72%; padding: 0 0.75em; font-size: 1.125em;">
+        <option value="Person">Person (人物)</option>
+        <option value="Organization" >Organization (组织)</option>
+        <option value="Location" >Location (地点)</option>
+        <option value="Event" >Event (事件)</option>
+        <option value="Concept" >Concept (概念)</option>
+        <option value="DATE" >DATE (日期)</option>
+        <option value="Number" >Number (数字)</option>
+        <option value="Work" >Work (作品)</option>
+      </select>
       <input id="relation-label" class="swal2-input" placeholder="关系类型（例如来自、包含等）">
     `,
     focusConfirm: false,
@@ -561,12 +570,13 @@ async promptAddNeighbor(node) {
     target: newNode.id,
     label: formValues.label
   };
-console.log("📦 addNode 请求数据：", {
-  graph_id: this.currentGraphId,
-  source_node_id: newLink.source,
-  link: newLink.label,
-  new_node: newNode
-});
+
+  console.log("📦 addNode 请求数据：", {
+    graph_id: this.currentGraphId,
+    source_node_id: newLink.source,
+    link: newLink.label,
+    new_node: newNode
+  });
 
   try {
     await addNode(this.currentGraphId, newNode, newLink);
@@ -577,6 +587,7 @@ console.log("📦 addNode 请求数据：", {
     Swal.fire("添加失败", err.message || "后端错误", "error");
   }
 }
+
   /**
    * 显示空状态消息
    */
