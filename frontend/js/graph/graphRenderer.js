@@ -502,7 +502,7 @@ async promptAddNeighbor(node) {
     html: `
       <input id="node-name" class="swal2-input" placeholder="新节点名称">
       <input id="node-type" class="swal2-input" placeholder="节点类型">
-      <input id="relation-label" class="swal2-input" placeholder="关系名称（如 属于、相关于）">
+      <input id="relation-label" class="swal2-input" placeholder="关系类型（来自、包含、属于、同现）">
     `,
     focusConfirm: false,
     showCancelButton: true,
