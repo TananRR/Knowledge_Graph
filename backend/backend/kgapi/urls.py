@@ -24,6 +24,6 @@ urlpatterns = [
     path('register/',register),
     path('delete_user/',delete_user),
     path('change_password/',change_password),
-    path('delete/node/', delete_node),  # 删除节点
-    path('add/node/', add_node),
+    path('delete_node/', delete_node),  # 删除节点
+    path('add_node/', add_node),
 ]
