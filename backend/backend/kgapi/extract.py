@@ -8,9 +8,9 @@ from django.conf import settings
 from docx import Document
 import fitz  # PyMuPDF
 import pdfplumber
-from .extractor import extract_knowledge
+#from .extractor import extract_knowledge
 from .kg_writer import create_graph
-
+from .test import process_text_to_json
 # 配置日志
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,14 @@ def save_uploaded_file(file):
             destination.write(chunk)
     return file_path
 
-
+def process_relations_spaces(kg_result):
+    """将relations中的type和verb字段的空格替换为下划线"""
+    for relation in kg_result["relations"]:
+        if ' ' in relation["type"]:
+            relation["type"] = relation["type"].replace(" ", "_")
+        if ' ' in relation["verb"]:
+            relation["verb"] = relation["verb"].replace(" ", "_")
+    return kg_result
 @csrf_exempt
 @require_http_methods(["POST"])
 def extract_text_from_file(request):
@@ -131,7 +138,8 @@ def extract_text_from_file(request):
             raise FileProcessingError("提取到的文本内容为空")
 
         # 抽取知识
-        kg_result = extract_knowledge(text)
+        kg_result = process_text_to_json(text, "zh_CN")
+        kg_result = process_relations_spaces(kg_result)
 
         # 创建知识图谱
         graph_id = time.strftime("graph_%Y%m%d%H%M%S")

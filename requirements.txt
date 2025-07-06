@@ -12,3 +12,6 @@ python-docx
 pdfplumber~=0.11.7
 PyMuPDF
 numpy>=1.21,<2.0
+transformers
+
+

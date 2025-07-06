@@ -4,12 +4,12 @@ WORKDIR /app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
-
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu
 # 假设 zh_core_web_sm-3.7.0.tar.gz 位于项目根目录下
-COPY zh_core_web_sm-3.7.0.tar.gz ./
+# COPY zh_core_web_sm-3.7.0.tar.gz ./
 
 # 安装模型
-RUN pip install --no-cache-dir zh_core_web_sm-3.7.0.tar.gz
+# RUN pip install --no-cache-dir zh_core_web_sm-3.7.0.tar.gz
 
 
 COPY . .

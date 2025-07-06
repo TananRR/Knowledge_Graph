@@ -79,6 +79,18 @@ def sanitize_relation_type(rel_type):
         raise ValueError(f"非法的关系类型: {rel_type}")
 
 
+# def sanitize_relation_type(rel_type):
+#     """标准化和验证关系类型字符串（允许空格）"""
+#     # 1. 替换非法字符（保留空格）
+#     rel_type = rel_type.replace("-", "_")
+#
+#     # 2. 正则验证（允许字母、数字、下划线、空格）
+#     if re.fullmatch(r"[A-Za-z0-9_ ]+", rel_type):  # 注意正则中添加了空格
+#         # 3. 转为大写并去除首尾空格
+#         return rel_type.strip().upper()  # 用strip()去除首尾多余空格
+#     else:
+#         # 4. 抛出异常
+#         raise ValueError(f"非法的关系类型: {rel_type}")
 # 为每次上传的数据打上唯一标识
 def generate_new_graph_id(session, user_id):
     """
