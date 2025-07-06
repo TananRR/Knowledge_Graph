@@ -71,12 +71,12 @@ def delete_all_users_and_passwords(session):
 
 
 # 处理非法关系名
-def sanitize_relation_type(rel_type):
-    rel_type = rel_type.replace("-", "_")
-    if re.fullmatch(r"[A-Za-z0-9_]+", rel_type):
-        return rel_type.upper()
-    else:
-        raise ValueError(f"非法的关系类型: {rel_type}")
+# def sanitize_relation_type(rel_type):
+#     rel_type = rel_type.replace("-", "_")
+#     if re.fullmatch(r"[A-Za-z0-9_]+", rel_type):
+#         return rel_type.upper()
+#     else:
+#         raise ValueError(f"非法的关系类型: {rel_type}")
 
 
 # 为每次上传的数据打上唯一标识
@@ -153,16 +153,16 @@ def create_relations(session, relations, entities, graph_id, user_id):
             print(f" 跳过无效关系，source 或 target 找不到对应实体: {relation}")
             continue
 
-        try:
-            rel_type = sanitize_relation_type(relation["type"])
-        except ValueError as e:
-            print(f" 非法关系类型: {e}")
-            continue
+        # try:
+        #     rel_type = sanitize_relation_type(relation["type"])
+        # except ValueError as e:
+        #     print(f" 非法关系类型: {e}")
+        #     continue
 
         cypher = f"""
         MATCH (a:Entity {{id: $source_id, graph_id: $graph_id, user_id: $user_id}}),
               (b:Entity {{id: $target_id, graph_id: $graph_id, user_id: $user_id}})
-        MERGE (a)-[r:{rel_type}]->(b)
+        MERGE (a)-[r:{relation["type"]}]->(b)
         ON CREATE SET r.graph_id = $graph_id,
                       r.verb = $verb,
                       r.similarity = $similarity,
@@ -515,6 +515,278 @@ def create_graph(entities, relations, graph_id, user_id):
         create_entities(session, entities, graph_id, user_id)
         create_relations(session, relations, entities, graph_id, user_id)
 
+# 获取指定图谱中最大的实体ID数字  
+def get_max_entity_id(session, graph_id, user_id):
+    """
+    获取指定图谱中最大的实体ID数字
+    
+    参数:
+        session: Neo4j 会话
+        graph_id: 图谱ID
+        user_id: 用户ID
+    
+    返回:
+        最大实体ID的整数值（例如实体ID为"e100"，则返回100）
+        如果没有实体，返回0
+    """
+    # 首先获取所有实体ID
+    result = session.run(
+        """
+        MATCH (e:Entity {graph_id: $graph_id, user_id: $user_id})
+        RETURN e.id AS entity_id
+        """,
+        graph_id=graph_id,
+        user_id=user_id
+    )
+    
+    max_id = 0
+    for record in result:
+        entity_id = record["entity_id"]
+        # 提取ID中的数字部分
+        if entity_id.startswith("e") and entity_id[1:].isdigit():
+            num = int(entity_id[1:])
+            if num > max_id:
+                max_id = num
+    
+    print(f"图谱 {graph_id} 中最大实体ID: e{max_id}")
+    return max_id
+
+# 辅助函数：通过ID获取实体名称
+def get_entity_name_by_id(session, entity_id, graph_id, user_id):
+    """
+    通过ID获取实体名称
+    返回：实体名称字符串或None
+    """
+    result = session.run(
+        """
+        MATCH (e:Entity 
+            {id: $entity_id, graph_id: $graph_id, user_id: $user_id})
+        RETURN e.name AS name
+        """,
+        entity_id=entity_id,
+        graph_id=graph_id,
+        user_id=user_id
+    )
+    
+    record = result.single()
+    return record["name"] if record else None
+
+# 在update_knowledge_graph中添加ID到名称的转换
+def update_knowledge_graph(session, entities, relations, graph_id, user_id):
+    """
+    向现有图谱中添加新的实体和关系
+    
+    参数:
+        session: Neo4j 会话
+        entities: 要添加的新实体列表
+        relations: 要添加的新关系列表
+        graph_id: 要更新的图谱ID
+        user_id: 用户ID（用于权限验证）
+    
+    返回:
+        (新增实体数量, 新增关系数量)
+    """
+    # 1. 验证图谱存在且属于该用户
+    result = session.run(
+        """
+        MATCH (e:Entity {graph_id: $graph_id, user_id: $user_id})
+        RETURN count(e) > 0 AS graph_exists
+        """,
+        graph_id=graph_id,
+        user_id=user_id
+    )
+    graph_exists = result.single()["graph_exists"]
+    
+    if not graph_exists:
+        raise ValueError(f"图谱 {graph_id} 不存在或不属于用户 {user_id}")
+    
+    # 2. 记录当前实体数量（用于计算增量）
+    before_entities = count_entities_by_graph(session, graph_id)
+    
+    # 3. 获取当前最大实体ID
+    max_id = get_max_entity_id(session, graph_id, user_id)
+    
+    # 4. 创建原始ID到名称的映射（从上传的实体列表中）
+    id_to_name_map = {}
+    for entity in entities:
+        if "id" in entity and "name" in entity:
+            id_to_name_map[entity["id"]] = entity["name"]
+    
+    # 5. 创建名称到最终ID的映射，为了新增关系的正确
+    name_to_id_map = {}
+    
+    # 6. 添加新实体（如果实体已存在则更新）
+    new_entities = 0
+    for entity in entities:
+        # 确保实体包含图谱ID和用户ID
+        entity["graph_id"] = graph_id
+        entity["user_id"] = user_id
+        
+        # 检查实体是否已存在（通过名称）
+        result = session.run(
+            """
+            MATCH (e:Entity 
+                {name: $name, graph_id: $graph_id, user_id: $user_id})
+            RETURN e.id AS id
+            """,
+            name=entity["name"],
+            graph_id=graph_id,
+            user_id=user_id
+        )
+        
+        record = result.single()
+        if record:
+            # 实体存在 - 使用现有ID
+            entity["id"] = record["id"]
+            name_to_id_map[entity["name"]] = entity["id"]
+            # 更新属性
+            session.run(
+                """
+                MATCH (e:Entity 
+                    {id: $id, graph_id: $graph_id, user_id: $user_id})
+                SET e.name = $name, e.type = $type
+                """,
+                id=entity["id"],
+                name=entity["name"],
+                type=entity["type"],
+                graph_id=graph_id,
+                user_id=user_id
+            )
+        else:
+            # 实体不存在 - 创建新实体
+            max_id += 1
+            new_id = f"e{max_id}"
+            entity["id"] = new_id
+            name_to_id_map[entity["name"]] = new_id
+            
+            session.run(
+                """
+                CREATE (e:Entity {
+                    id: $id, 
+                    name: $name, 
+                    type: $type,
+                    graph_id: $graph_id,
+                    user_id: $user_id
+                })
+                """,
+                id=entity["id"],
+                name=entity["name"],
+                type=entity["type"],
+                graph_id=graph_id,
+                user_id=user_id
+            )
+            new_entities += 1
+            print(f"创建新实体: ID={new_id}, 名称={entity['name']}")
+    
+    # 7. 添加新关系
+    new_relations = 0
+    for relation in relations:
+        # 转换原始ID为名称
+        source_name = id_to_name_map.get(relation["source"])
+        target_name = id_to_name_map.get(relation["target"])
+        
+        # 如果映射中没有，尝试从数据库获取名称
+        if not source_name:
+            source_name = get_entity_name_by_id(session, relation["source"], graph_id, user_id)
+        if not target_name:
+            target_name = get_entity_name_by_id(session, relation["target"], graph_id, user_id)
+        
+        if not source_name:
+            print(f"跳过无效关系: 源实体ID '{relation['source']}' 未找到")
+            continue
+        if not target_name:
+            print(f"跳过无效关系: 目标实体ID '{relation['target']}' 未找到")
+            continue
+        
+        # 使用名称获取最终ID
+        final_source_id = name_to_id_map.get(source_name)
+        final_target_id = name_to_id_map.get(target_name)
+        
+        if not final_source_id:
+            print(f"跳过关系: 源实体 '{source_name}' 未在映射中找到")
+            continue
+        if not final_target_id:
+            print(f"跳过关系: 目标实体 '{target_name}' 未在映射中找到")
+            continue
+        
+        # 检查源实体和目标实体是否存在
+        source_exists = session.run(
+            """
+            MATCH (e:Entity 
+                {id: $source_id, graph_id: $graph_id, user_id: $user_id})
+            RETURN count(e) > 0
+            """,
+            source_id=final_source_id,
+            graph_id=graph_id,
+            user_id=user_id
+        ).single()[0]
+        
+        target_exists = session.run(
+            """
+            MATCH (e:Entity 
+                {id: $target_id, graph_id: $graph_id, user_id: $user_id})
+            RETURN count(e) > 0
+            """,
+            target_id=final_target_id,
+            graph_id=graph_id,
+            user_id=user_id
+        ).single()[0]
+        
+        if not source_exists:
+            print(f"跳过无效关系: 源实体 '{final_source_id}' 不存在")
+            continue
+        if not target_exists:
+            print(f"跳过无效关系: 目标实体 '{final_target_id}' 不存在")
+            continue
+        
+        # 检查关系是否已存在
+        result = session.run(
+            f"""
+            MATCH (a)-[r:{relation['type']}]->(b)
+            WHERE a.id = $source_id AND b.id = $target_id
+                AND a.graph_id = $graph_id AND b.graph_id = $graph_id
+                AND a.user_id = $user_id AND b.user_id = $user_id
+            RETURN r
+            """,
+            source_id=final_source_id,
+            target_id=final_target_id,
+            graph_id=graph_id,
+            user_id=user_id
+        )
+        
+        if result.single():
+            print(f"关系已存在: {source_name} ({final_source_id}) -[{relation['type']}]-> {target_name} ({final_target_id})")
+        else:
+            # 创建新关系
+            session.run(
+                f"""
+                MATCH (a:Entity {{id: $source_id, graph_id: $graph_id, user_id: $user_id}}),
+                      (b:Entity {{id: $target_id, graph_id: $graph_id, user_id: $user_id}})
+                MERGE (a)-[r:{relation['type']}]->(b)
+                SET r.verb = $verb,
+                    r.similarity = $similarity,
+                    r.graph_id = $graph_id,
+                    r.user_id = $user_id
+                """,
+                source_id=final_source_id,
+                target_id=final_target_id,
+                verb=relation.get("verb", ""),
+                similarity=relation.get("similarity", 0.0),
+                graph_id=graph_id,
+                user_id=user_id
+            )
+            new_relations += 1
+            print(f"创建新关系: {source_name} ({final_source_id}) -[{relation['type']}]-> {target_name} ({final_target_id})")
+    
+    # 8. 计算并返回更新统计信息
+    after_entities = count_entities_by_graph(session, graph_id)
+    actual_new_entities = after_entities - before_entities
+    
+    print(f"图谱 {graph_id} 更新完成: "
+          f"新增实体: {new_entities} (实际: {actual_new_entities}), "
+          f"新增关系: {new_relations}")
+    
+    return actual_new_entities, new_relations
 # 主函数
 def main():
     # 配置 Neo4j 数据库连接
@@ -538,10 +810,10 @@ def main():
     #             print("❌ 密码错误或用户不存在")
     #     delete_all_users_and_passwords(session)
 
-    file_path = "D:/A-trainingStore/Knowledge_Graph/extracted_result.json"
+    # file_path = "D:/A-trainingStore/Knowledge_Graph/extracted_result.json"
 
-    with open(file_path, "r", encoding="utf-8") as file:
-        data = json.load(file)
+    # with open(file_path, "r", encoding="utf-8") as file:
+    #     data = json.load(file)
 
     with driver.session() as session:
         # 删除图谱：
@@ -550,9 +822,9 @@ def main():
         # clear_graphs_by_user(session, user_id)
 
         # Step 1: 自动生成唯一 graph_id，user_id
-        user_id = 'user003'
-        graph_id = generate_new_graph_id(session, user_id)
-        print(f"\n[1] 生成 graph_id: {graph_id}")
+        # user_id = 'user003'
+        # graph_id = generate_new_graph_id(session, user_id)
+        # print(f"\n[1] 生成 graph_id: {graph_id}")
         # # 上传知识图谱
         # create_entities(session, data["entities"], graph_id, user_id)
         # create_relations(session, data["relations"], data["entities"], graph_id, user_id)
@@ -597,14 +869,49 @@ def main():
         # print("\n[7] 删除实体 e3")
         # delete_success = delete_entity_by_id(session, "e3", graph_id, user_id)
 
-        # # Step 8: 查询图谱再次确认删除效果
-        # print("\n[8] 查询图谱结构（删除后）")
-        # graph = query_graph(session, graph_id)
-
-        # # Step 9: 清除该图谱（可选）
-        # print("\n[9] 删除图谱")
-        # clear_graph_by_id(session, graph_id)
-
+        # 修改2025.7.6
+        # 创建测试用户和图谱
+        user_id = "user123"
+        graph_id = "user123_1"
+        
+        # 创建初始图谱
+        initial_entities = [
+            {"id": "e1", "name": "中国", "type": "国家"},
+            {"id": "e2", "name": "北京", "type": "城市"}
+        ]
+        initial_relations = [
+            {"source": "e2", "target": "e1", "type": "BELONGS_TO", "verb": "属于"}
+        ]
+        
+        create_entities(session, initial_entities, graph_id, user_id)
+        create_relations(session, initial_relations, initial_entities, graph_id, user_id)
+        
+        print("初始图谱:")
+        query_graph(session, graph_id)
+        
+        # 更新图谱 - 添加新实体
+        new_entities = [
+            {"id": "e1", "name": "上海", "type": "城市"},
+            {"id": "e2", "name": "长江", "type": "河流"},
+            {"id": "e3", "name": "中国", "type": "国家"},
+        ]
+        
+        new_relations = [
+            {"source": "e1", "target": "e3", "type": "BELONGS_TO", "verb": "属于"},
+            {"source": "e2", "target": "e1", "type": "FLOWS_THROUGH", "verb": "流经"}
+        ]
+        
+        new_ent_count, new_rel_count = update_knowledge_graph(
+            session,
+            entities=new_entities,
+            relations=new_relations,
+            graph_id=graph_id,
+            user_id=user_id
+        )
+        
+        print(f"新增实体: {new_ent_count}, 新增关系: {new_rel_count}")
+        print("更新后的图谱:")
+        query_graph(session, graph_id)
         print("\n✅ 所有测试完成。")
 
 

@@ -9,7 +9,8 @@ import {
   deleteGraphsByUser,
   fetchUserGraphIds,
   fetchUserGraphs,
-  deleteUser
+  deleteUser,
+  updateGraphData
 } from '../api.js';
 
 export class GraphHandlers {
@@ -398,6 +399,95 @@ allResults.forEach(item => {
       this.renderer.renderGraph(graphData);
     }
   }
+
+ async updateSelectedGraph() {
+  const select = document.getElementById("graphSelect");
+  const selectedId = select.value;
+  if (!selectedId) return;
+
+  // 弹出上传文件的对话框
+  const { value: file } =await Swal.fire({
+    title: "上传并更新图谱",
+    html: `
+      <div class="file-upload-container" onclick="document.getElementById('swal-update-file').click()">
+        <label class="file-upload-label" for="swal-update-file">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>点击选择文件或拖放至此</span>
+        </label>
+        <input type="file" id="swal-update-file" class="file-upload-input" accept=".json,.csv,.txt,.xml"/>
+        <div class="file-upload-name" id="swal-file-name">尚未选择文件</div>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: "开始上传",
+    cancelButtonText: "取消",
+    customClass: {
+      popup: 'rounded-swal',
+    },
+    didOpen: () => {
+      const fileInput = document.getElementById("swal-update-file");
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        document.getElementById("swal-file-name").textContent = file ? file.name : "尚未选择文件";
+      });
+    },
+    preConfirm: () => {
+      const file = document.getElementById("swal-update-file").files[0];
+      if (!file) {
+        Swal.showValidationMessage("请先选择一个文件");
+        return false;
+      }
+      return file;
+    }
+  });
+
+  // 如果用户取消了文件上传，则返回
+  if (!file) return;
+
+  // 显示加载中的提示框
+  const loadingSwal = Swal.fire({
+    title: '上传文件中...',
+    text: '请稍等，上传并更新图谱',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    // 处理文件上传
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const userId = sessionStorage.getItem('currentUser') || "default_user";
+    const result = await uploadTextFile(formData, userId);
+
+    if (result.status === 'success') {
+      // 如果上传成功，获取更新后的图谱数据
+      const graphData = await updateGraphData(this.currentGraphId);
+
+      // 更新图谱显示
+      this.renderer.renderGraph(graphData);
+
+      Swal.fire({
+        icon: 'success',
+        title: '图谱更新成功',
+        text: '文件上传并成功更新图谱。',
+        confirmButtonText: '确认'
+      });
+    } else {
+      throw new Error(result.message || '上传失败');
+    }
+  } catch (err) {
+    console.error('上传失败:', err);
+    Swal.fire({
+      icon: 'error',
+      title: '上传失败',
+      text: err.message || '发生错误，请稍后再试'
+    });
+  } finally {
+    loadingSwal.close(); // 关闭加载提示框
+  }
+}
+
 
   async handleDeleteUser() {
     const currentUser = sessionStorage.getItem('currentUser');

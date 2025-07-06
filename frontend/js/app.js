@@ -63,6 +63,7 @@ console.log("注册 renderer 实例 ID:", graphRenderer.id);
 window.handleSearch = () => graphHandlers.handleSearch().catch(showError);
 window.handleUpload = () => graphHandlers.handleUpload().catch(showError);
 window.loadSelectedGraph = () => graphHandlers.loadSelectedGraph().catch(showError);
+window.updateSelectedGraph=()=>graphHandlers.updateSelectedGraph().catch(showError)
 window.handleDeleteGraph = () => graphHandlers.handleDeleteGraph().catch(showError);
 window.handleDeleteByUser = () => graphHandlers.handleDeleteByUser().catch(showError);
 window.DeleteUser = () => graphHandlers.handleDeleteUser().catch(showError);

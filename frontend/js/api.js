@@ -44,6 +44,12 @@ export async function fetchGraphData(graphId) {
   return handleResponse(resp); // 应返回 { nodes: [], links: [] }
 }
 
+export async function updateGraphData(graphId){
+  if (!graphId) throw new Error("缺少 graphId");
+  const resp = await fetch(`${BASE_URL}/update/graph/?graph_id=${encodeURIComponent(graphId)}`);
+  return handleResponse(resp); // 应返回 { nodes: [], links: [] }
+}
+
 // ✅ 获取用户图谱 ID 列表
 export async function fetchUserGraphIds(userId) {
   const resp = await fetch(`${BASE_URL}/query/user/graph_ids/?user_id=${encodeURIComponent(userId)}`);
