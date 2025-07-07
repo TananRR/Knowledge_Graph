@@ -10,6 +10,8 @@ import fitz  # PyMuPDF
 import pdfplumber
 from .extractor import extract_knowledge
 from .kg_writer import create_graph
+from .model.main import process_text_to_json
+from .BaiduFanyi import BaiduTranslator,translate_relations_with_api
 
 # 配置日志
 logger = logging.getLogger(__name__)
