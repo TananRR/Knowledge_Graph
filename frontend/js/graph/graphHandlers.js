@@ -1,7 +1,8 @@
 
 import {
   fetchGraphData,
-  uploadTextFile,
+  uploadText,
+  uploadFile,
   searchNodes,
   downloadGraphJSON,
   deleteAllGraphs,
@@ -50,48 +51,67 @@ export class GraphHandlers {
     }
   }
 
- async handleUpload() {
-    const fileInput = document.getElementById("upload-file");
-    const file = fileInput.files[0];
-    const fileNameDisplay = document.getElementById("file-name");
-    const userId = sessionStorage.getItem('currentUser') || "default_user";
+async handleUpload() {
+  const fileInput = document.getElementById("upload-file");
+  const file = fileInput.files[0];
+  const fileNameDisplay = document.getElementById("file-name");
+  const text = document.getElementById("manual-input")?.value?.trim() || "";
+  const userId = sessionStorage.getItem("currentUser") || "default_user";
 
-    if (!file) {
-      throw new Error('请先选择文件！');
-    }
-     //显示加载中的弹窗
-  const swalInstance = Swal.fire({
-    title: '文件提取中...',
-    html: '请稍候，处理完成后会自动关闭',
+  if (!file && !text) {
+    Swal.fire("提示", "请上传文件或输入文本", "warning");
+    return;
+  }
+
+  const loading = Swal.fire({
+    title: "正在处理...",
+    html: "请稍候，正在构建知识图谱",
     allowOutsideClick: false,
     didOpen: () => {
       Swal.showLoading();
     }
   });
 
-    try {
-      const result = await uploadTextFile(file, userId);
-      // 关闭加载中弹窗
-      await swalInstance.close();
-      if (result.status === "success") {
-        Swal.fire("成功", "文件提取完成！", "success");
-        this.currentGraphId = result.graph_id;
-        this.renderer.currentGraphId = result.graph_id;  // ✅ 添加这一行
-        await this.loadGraphList(userId);
-        const select = document.getElementById("graphSelect");
-        select.value = this.currentGraphId;
+  try {
+    let result;
 
-        const graphData = await fetchGraphData(this.currentGraphId);
-        this.renderer.renderGraph(graphData);
-        return result;
-      } else {
-        throw new Error(result.message || "提取失败");
-      }
-    } finally {
-      fileInput.value = "";
-      fileNameDisplay.textContent = "";
+    if (file) {
+      result = await uploadFile(file, userId);
+    } else {
+      result = await uploadText(text, userId); // ✅ 你需要实现这个函数
     }
+
+    await loading.close();
+
+    if (result.status === "success") {
+      Swal.fire("成功", "处理完成", "success");
+
+      this.currentGraphId = result.graph_id;
+      this.renderer.currentGraphId = result.graph_id;
+
+      await this.loadGraphList(userId);
+      const select = document.getElementById("graphSelect");
+      select.value = this.currentGraphId;
+
+      const graphData = await fetchGraphData(this.currentGraphId);
+      this.renderer.renderGraph(graphData);
+    } else {
+      throw new Error(result.message || "处理失败");
+    }
+  } catch (err) {
+    await loading.close();
+    Swal.fire("错误", err.message || "处理出错", "error");
+  }finally {
+  fileInput.value = "";
+  fileNameDisplay.textContent = "";
+
+  // 清空输入框内容
+  const textInput = document.getElementById("manual-input");
+  if (textInput) {
+    textInput.value = "";
   }
+}
+}
 
 async handleDeleteGraph() {
   try {
@@ -104,7 +124,6 @@ async handleDeleteGraph() {
       });
       return;
     }
-
     // 确认对话框
     const result = await Swal.fire({
       title: `确定删除图谱 ${this.currentGraphId} 吗？`,
@@ -152,7 +171,7 @@ async handleDeleteGraph() {
       title: '删除失败！',
       text: error.message
     });
-  }
+   }
 }
 
 async loadGraphById(graphId) {

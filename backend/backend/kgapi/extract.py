@@ -104,64 +104,65 @@ def save_uploaded_file(file):
 @csrf_exempt
 @require_http_methods(["POST"])
 def extract_text_from_file(request):
-    """处理文件上传和知识提取的主视图函数"""
+    """处理文件上传或直接文本内容的知识提取接口"""
     try:
-        # 获取上传的文件
-        file = request.FILES.get("file")
-
-        # 验证文件
-        validate_file(file)
-
-        # 记录开始时间用于性能监控
         start_time = time.time()
+        file = request.FILES.get("file")
+        raw_text = request.POST.get("text", "").strip()
+        user_id = request.POST.get("user_id", "default_user")
 
-        # 根据文件类型提取文本
-        file_extension = file.name.split('.')[-1].lower()
-        text = ""
+        if file:
+            # 验证文件
+            validate_file(file)
 
-        if file_extension == 'txt':
-            text = file.read().decode('utf-8')
-        elif file_extension == 'pdf':
-            text = extract_text_from_pdf(file)
-        elif file_extension == 'docx':
-            text = extract_text_from_docx(file)
+            file_extension = file.name.split('.')[-1].lower()
+            if file_extension == 'txt':
+                text = file.read().decode('utf-8')
+            elif file_extension == 'pdf':
+                text = extract_text_from_pdf(file)
+            elif file_extension == 'docx':
+                text = extract_text_from_docx(file)
+            else:
+                raise FileProcessingError("暂不支持的文件格式")
+        elif raw_text:
+            text = raw_text
+        else:
+            raise FileProcessingError("请上传文件或输入文本内容")
 
-        # 检查是否成功提取到文本
         if not text.strip():
             raise FileProcessingError("提取到的文本内容为空")
 
         # 抽取知识
         kg_result = extract_knowledge(text)
 
-        # 创建知识图谱
+        # 创建图谱
         graph_id = time.strftime("graph_%Y%m%d%H%M%S")
-        user_id = request.POST.get("user_id", "default_user")
         create_graph(kg_result["entities"], kg_result["relations"], graph_id, user_id)
 
-        # 记录处理耗时
         processing_time = time.time() - start_time
-        logger.info(f"文件处理完成: {file.name}, 大小: {file.size / 1024:.2f}KB, 耗时: {processing_time:.2f}秒")
+        logger.info(f"知识构建完成，来源: {'文件' if file else '纯文本'}，耗时: {processing_time:.2f}秒")
 
         return JsonResponse({
             "status": "success",
-            "text": text[:1000] + "..." if len(text) > 1000 else text,  # 返回部分文本预览
+            "text": text[:1000] + "..." if len(text) > 1000 else text,
             "entities": kg_result["entities"],
             "relations": kg_result["relations"],
             "graph_id": graph_id,
             "processing_time": f"{processing_time:.2f}秒",
             "file_info": {
-                "name": file.name,
-                "size": file.size,
-                "type": file.content_type
+                "source": "file" if file else "text",
+                "name": file.name if file else "手动输入",
+                "size": file.size if file else len(text.encode("utf-8")),
+                "type": file.content_type if file else "text/plain"
             }
         }, status=200)
 
     except FileProcessingError as e:
-        logger.warning(f"文件处理失败: {str(e)}")
+        logger.warning(f"输入数据处理失败: {str(e)}")
         return JsonResponse({
             "status": "error",
             "error": str(e),
-            "message": "文件处理失败"
+            "message": "数据处理失败"
         }, status=400)
 
     except Exception as e:

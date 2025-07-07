@@ -20,7 +20,7 @@ export async function searchNodes(keyword) {
   return data.results || [];
 }
 
-export async function uploadTextFile(file, userId) {
+export async function uploadFile(file, userId) {
   if (!file) throw new Error("未选择文件");
 
   const formData = new FormData();
@@ -34,6 +34,19 @@ export async function uploadTextFile(file, userId) {
 
   return handleResponse(resp);
 }
+export async function uploadText(text, userId) {
+  const formData = new FormData();
+  formData.append("text", text);
+  formData.append("user_id", userId);
+
+  const resp = await fetch(`${BASE_URL}/extract/`, {
+    method: "POST",
+    body: formData
+  });
+
+  return await resp.json();
+}
+
 
 
 // ✅ 查询指定图谱数据（graph_id）

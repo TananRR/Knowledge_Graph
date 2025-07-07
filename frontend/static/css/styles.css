@@ -596,11 +596,11 @@ svg {
   border: none;
   background: transparent;
   resize: none;
-  padding: 10px;
+  padding: 5px;
   font-size: 14px;
   font-family: inherit;
   color: var(--text-color);
-  margin-top: 10px;
+  margin-bottom: 10px;
   background-color: var(--card-bg);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -608,10 +608,7 @@ svg {
   transition: var(--transition);
 }
 
-.file-upload-input-text::placeholder {
-  color: var(--text-light);
-  opacity: 0.8;
-}
+
 
 
 
