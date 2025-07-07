@@ -13,8 +13,14 @@ from .kg_writer import create_graph
 from .model.main import process_text_to_json
 from .BaiduFanyi import BaiduTranslator,translate_relations_with_api
 
+import json
 # 配置日志
 logger = logging.getLogger(__name__)
+
+translator = BaiduTranslator(
+            appid='20250706002398770',
+            secret_key='XgSUBZMZ_uJyDTQNvZbj'
+        )
 
 # 常量定义
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
@@ -106,17 +112,16 @@ def save_uploaded_file(file):
 @csrf_exempt
 @require_http_methods(["POST"])
 def extract_text_from_file(request):
-    """处理文件上传或直接文本内容的知识提取接口"""
+    """处理文件上传或直接文本内容的知识提取接口（整合翻译 + 文本输入 + 文件支持）"""
     try:
         start_time = time.time()
         file = request.FILES.get("file")
         raw_text = request.POST.get("text", "").strip()
         user_id = request.POST.get("user_id", "default_user")
 
+        # 读取文本内容
         if file:
-            # 验证文件
             validate_file(file)
-
             file_extension = file.name.split('.')[-1].lower()
             if file_extension == 'txt':
                 text = file.read().decode('utf-8')
@@ -134,15 +139,20 @@ def extract_text_from_file(request):
         if not text.strip():
             raise FileProcessingError("提取到的文本内容为空")
 
-        # 抽取知识
-        kg_result = extract_knowledge(text)
+        # 🔍 抽取知识 + 翻译（来自第一段逻辑）
+        kg_result = process_text_to_json(text)
+        kg_result = translate_relations_with_api(kg_result, translator)
 
-        # 创建图谱
+        # ⏺️ 保存处理结果（来自第一段逻辑）
+        with open('final_result_translated.json', 'w', encoding='utf-8') as f:
+            json.dump(kg_result, f, indent=2, ensure_ascii=False)
+
+        # 🧠 构建图谱
         graph_id = time.strftime("graph_%Y%m%d%H%M%S")
         create_graph(kg_result["entities"], kg_result["relations"], graph_id, user_id)
 
         processing_time = time.time() - start_time
-        logger.info(f"知识构建完成，来源: {'文件' if file else '纯文本'}，耗时: {processing_time:.2f}秒")
+        logger.info(f"知识图谱构建完成，来源: {'文件' if file else '文本输入'}，耗时: {processing_time:.2f}秒")
 
         return JsonResponse({
             "status": "success",
@@ -174,3 +184,4 @@ def extract_text_from_file(request):
             "error": "服务器内部错误",
             "message": "处理过程中发生意外错误"
         }, status=500)
+

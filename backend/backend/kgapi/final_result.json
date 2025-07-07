@@ -1,0 +1,174 @@
+{
+  "entities": [
+    {
+      "id": "e1",
+      "name": "贾政",
+      "type": "per",
+      "start": 4,
+      "end": 6
+    },
+    {
+      "id": "e2",
+      "name": "贾宝玉",
+      "type": "concept",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "id": "e3",
+      "name": "林黛玉",
+      "type": "per",
+      "start": 2,
+      "end": 5
+    },
+    {
+      "id": "e4",
+      "name": "青梅竹马",
+      "type": "per",
+      "start": 5,
+      "end": 9
+    },
+    {
+      "id": "e5",
+      "name": "薛姨妈",
+      "type": "concept",
+      "start": 4,
+      "end": 7
+    },
+    {
+      "id": "e6",
+      "name": "薛宝钗",
+      "type": "concept",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "id": "e7",
+      "name": "王熙凤",
+      "type": "concept",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "id": "e8",
+      "name": "贾<unk>",
+      "type": "concept",
+      "start": -1,
+      "end": 5
+    },
+    {
+      "id": "e9",
+      "name": "贾母",
+      "type": "concept",
+      "start": 0,
+      "end": 2
+    },
+    {
+      "id": "e10",
+      "name": "贾探春",
+      "type": "concept",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "id": "e11",
+      "name": "贾赦",
+      "type": "concept",
+      "start": 3,
+      "end": 5
+    },
+    {
+      "id": "e12",
+      "name": "凤姐",
+      "type": "concept",
+      "start": 0,
+      "end": 2
+    },
+    {
+      "id": "e13",
+      "name": "尤氏姐妹",
+      "type": "concept",
+      "start": 3,
+      "end": 7
+    }
+  ],
+  "relations": [
+    {
+      "source": "e1",
+      "target": "e2",
+      "type": "child",
+      "verb": "child",
+      "similarity": 0.5
+    },
+    {
+      "source": "e3",
+      "target": "e4",
+      "type": "spouse",
+      "verb": "spouse",
+      "similarity": 0.5
+    },
+    {
+      "source": "e4",
+      "target": "e3",
+      "type": "spouse",
+      "verb": "spouse",
+      "similarity": 0.5
+    },
+    {
+      "source": "e5",
+      "target": "e6",
+      "type": "child",
+      "verb": "child",
+      "similarity": 0.5
+    },
+    {
+      "source": "e7",
+      "target": "e8",
+      "type": "spouse",
+      "verb": "spouse",
+      "similarity": 0.5
+    },
+    {
+      "source": "e8",
+      "target": "e7",
+      "type": "spouse",
+      "verb": "spouse",
+      "similarity": 0.5
+    },
+    {
+      "source": "e9",
+      "target": "e2",
+      "type": "child",
+      "verb": "child",
+      "similarity": 0.5
+    },
+    {
+      "source": "e1",
+      "target": "e10",
+      "type": "child",
+      "verb": "child",
+      "similarity": 0.5
+    },
+    {
+      "source": "e11",
+      "target": "e8",
+      "type": "child",
+      "verb": "child",
+      "similarity": 0.5
+    },
+    {
+      "source": "e12",
+      "target": "e13",
+      "type": "sibling",
+      "verb": "sibling",
+      "similarity": 0.5
+    },
+    {
+      "source": "e13",
+      "target": "e12",
+      "type": "sibling",
+      "verb": "sibling",
+      "similarity": 0.5
+    }
+  ]
+}
