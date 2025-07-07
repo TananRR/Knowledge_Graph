@@ -591,6 +591,29 @@ svg {
   font-size: 16px;
 }
 
+.file-upload-input-text {
+  width: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-color);
+  margin-top: 10px;
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.file-upload-input-text::placeholder {
+  color: var(--text-light);
+  opacity: 0.8;
+}
+
+
 
 
 
