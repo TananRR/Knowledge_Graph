@@ -41,6 +41,15 @@
             </div>
         </div>
 <div class="toolbar-card tab-panel" id="upload-tab">
+
+    <!-- ✅ 新增：直接输入文本区域 -->
+    <div class="toolbar-section">
+        <div class="section-title"><i class="fas fa-keyboard"></i> 文本输入</div>
+        <textarea  id="manual-input" rows="6" placeholder="在此输入或粘贴文本数据..." class="file-upload-input-text"></textarea>
+        <button class="bluegreen-btn" onclick="handleUpload()">
+            <i class="fas fa-paper-plane"></i> 提交文本数据
+        </button>
+    </div>
     <!-- 原上传部分 -->
     <div class="toolbar-section">
         <div class="section-title"><i class="fas fa-file-import"></i> 数据上传</div>
@@ -52,17 +61,8 @@
             <input type="file" id="upload-file" class="file-upload-input" accept=".txt,.pdf,.docx,.json"/>
             <div class="file-upload-name" id="file-name"></div>
         </div>
-        <button onclick="handleUpload()">
+        <button class="bluegreen-btn alt" onclick="handleUpload()">
             <i class="fas fa-upload"></i> 上传图谱数据
-        </button>
-    </div>
-
-    <!-- ✅ 新增：直接输入文本区域 -->
-    <div class="toolbar-section">
-        <div class="section-title"><i class="fas fa-keyboard"></i> 文本输入</div>
-        <textarea  id="manual-input" rows="6" placeholder="在此输入或粘贴文本数据..." class="file-upload-input-text"></textarea>
-        <button onclick="handleUpload()">
-            <i class="fas fa-paper-plane"></i> 提交文本数据
         </button>
     </div>
 </div>

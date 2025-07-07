@@ -608,6 +608,45 @@ svg {
   transition: var(--transition);
 }
 
+.bluegreen-btn {
+  background: linear-gradient(135deg, #42d1ff, #3bbfa7);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(50, 150, 150, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.bluegreen-btn:hover {
+  background: linear-gradient(135deg, #3bbfa7, #198e97);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(50, 150, 150, 0.3);
+}
+
+.bluegreen-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 6px rgba(50, 150, 150, 0.2);
+}
+
+/* 可选：第二个按钮样式略区分（如果需要） */
+.bluegreen-btn.alt {
+  background: linear-gradient(135deg, #4bd3c2, #58caff);
+}
+
+.bluegreen-btn.alt:hover {
+  background: linear-gradient(135deg, #198e97, #4bd3c2);
+}
+
+
 
 
 
